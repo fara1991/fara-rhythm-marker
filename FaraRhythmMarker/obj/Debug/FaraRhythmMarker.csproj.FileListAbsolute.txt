@@ -1,0 +1,10 @@
+E:\Projects\fara\FaraRhythmMarker\FaraRhythmMarker\obj\Debug\FaraRhythmMarker.csproj.AssemblyReference.cache
+E:\Projects\fara\FaraRhythmMarker\FaraRhythmMarker\obj\Debug\FaraRhythmMarker.GeneratedMSBuildEditorConfig.editorconfig
+E:\Projects\fara\FaraRhythmMarker\FaraRhythmMarker\obj\Debug\FaraRhythmMarker.AssemblyInfoInputs.cache
+E:\Projects\fara\FaraRhythmMarker\FaraRhythmMarker\obj\Debug\FaraRhythmMarker.AssemblyInfo.cs
+E:\Projects\fara\FaraRhythmMarker\FaraRhythmMarker\obj\Debug\FaraRhythmMarker.csproj.CoreCompileInputs.cache
+E:\Projects\fara\FaraRhythmMarker\FaraRhythmMarker\obj\Debug\FaraRhythmMarker.sourcelink.json
+E:\Projects\fara\FaraRhythmMarker\FaraRhythmMarker\bin\Debug\FaraRhythmMarker.dll
+E:\Projects\fara\FaraRhythmMarker\FaraRhythmMarker\bin\Debug\FaraRhythmMarker.pdb
+E:\Projects\fara\FaraRhythmMarker\FaraRhythmMarker\obj\Debug\FaraRhythmMarker.dll
+E:\Projects\fara\FaraRhythmMarker\FaraRhythmMarker\obj\Debug\FaraRhythmMarker.pdb
