@@ -5,7 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a80a908c-308a-43f7-a54c-d15ee6a53956" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,7 +33,7 @@
 }</component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Configuration/PluginConfig.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Controllers/RhythmMarkerController.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Controllers/RhythmMarkerController.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Installers/RhythmMarkerGameInstaller.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Models/BeatTimingModel.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Plugin.cs" root0="FORCE_HIGHLIGHTING" />
@@ -107,8 +107,18 @@
       <workItem from="1768231929374" duration="1005000" />
       <workItem from="1768234275315" duration="6446000" />
       <workItem from="1768537375871" duration="3557000" />
-      <workItem from="1768759848535" duration="7715000" />
+      <workItem from="1768759848535" duration="7846000" />
+      <workItem from="1768790630653" duration="11000" />
     </task>
+    <task id="LOCAL-00001" summary="Update FaraRhythmMarker">
+      <option name="closed" value="true" />
+      <created>1768767660823</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1768767660823</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -118,6 +128,8 @@
   <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+    <MESSAGE value="Update FaraRhythmMarker" />
+    <option name="LAST_COMMIT_MESSAGE" value="Update FaraRhythmMarker" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
