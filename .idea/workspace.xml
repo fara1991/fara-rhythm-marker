@@ -13,7 +13,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="46" />
+    <option name="cachedIndexableFilesCount" value="53" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Settings">
@@ -35,6 +35,7 @@
     <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Configuration/PluginConfig.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Controllers/RhythmMarkerController.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Installers/RhythmMarkerGameInstaller.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Installers/RhythmMarkerMenuInstaller.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Models/BeatTimingModel.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Plugin.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Views/MarkerView.cs" root0="FORCE_HIGHLIGHTING" />
@@ -81,10 +82,10 @@
 }</component>
   <component name="RecapSpentCounter">
     <option name="endsOfQuotaMs" value="1768899612761" />
-    <option name="spentUsd" value="0.06505935" />
+    <option name="spentUsd" value="0.09075515" />
   </component>
   <component name="RecapUselessUpdatesCounter">
-    <option name="suspendCountdown" value="8" />
+    <option name="suspendCountdown" value="0" />
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -109,6 +110,8 @@
       <workItem from="1768537375871" duration="3557000" />
       <workItem from="1768759848535" duration="7846000" />
       <workItem from="1768790630653" duration="11000" />
+      <workItem from="1768790719488" duration="7511000" />
+      <workItem from="1769104708665" duration="1628000" />
     </task>
     <task id="LOCAL-00001" summary="Update FaraRhythmMarker">
       <option name="closed" value="true" />
