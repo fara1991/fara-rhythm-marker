@@ -1,0 +1,14 @@
+﻿{
+  "$schema": "https://raw.githubusercontent.com/bsmg/BSIPA-MetadataFileSchema/master/Schema.json",
+  "id": "FaraRhythmMarker",
+  "name": "FaraRhythmMarker",
+  "author": "Fara",
+  "version": "0.1.0",
+  "gameVersion": "1.40.8",
+  "description": "Displays rhythm markers at specified beat intervals during gameplay.",
+  "dependsOn": {
+    "BSIPA": "^4.3.0",
+    "SiraUtil": "^3.1.0",
+    "BeatSaberMarkupLanguage": "^1.11.0"
+  }
+}

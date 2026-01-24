@@ -14,7 +14,6 @@ namespace FaraRhythmMarker.Views
     /// </summary>
     internal class SettingsMenuManager : IInitializable, IDisposable
     {
-        private readonly MenuButtons _menuButtons;
         private MenuButton? _menuButton;
         private SettingsModalView? _modalView;
 
@@ -29,9 +28,8 @@ namespace FaraRhythmMarker.Views
         private float _markerSize;
         private float _flashDuration;
 
-        public SettingsMenuManager(MenuButtons menuButtons)
+        public SettingsMenuManager()
         {
-            _menuButtons = menuButtons;
         }
 
         #region UI Values
@@ -234,7 +232,11 @@ namespace FaraRhythmMarker.Views
             try
             {
                 _menuButton = new MenuButton("Fara Rhythm Marker", "Configure rhythm marker settings", ShowSettings);
-                _menuButtons.RegisterButton(_menuButton);
+#if BS_1_29_1
+                BeatSaberMarkupLanguage.MenuButtons.MenuButtons.instance.RegisterButton(_menuButton);
+#else
+                BeatSaberMarkupLanguage.MenuButtons.MenuButtons.Instance.RegisterButton(_menuButton);
+#endif
                 Plugin.Log.Info("Menu button registered");
             }
             catch (Exception ex)
@@ -273,7 +275,11 @@ namespace FaraRhythmMarker.Views
         {
             if (_menuButton != null)
             {
-                _menuButtons.UnregisterButton(_menuButton);
+#if BS_1_29_1
+                BeatSaberMarkupLanguage.MenuButtons.MenuButtons.instance.UnregisterButton(_menuButton);
+#else
+                BeatSaberMarkupLanguage.MenuButtons.MenuButtons.Instance.UnregisterButton(_menuButton);
+#endif
             }
 
             if (_modalView != null)

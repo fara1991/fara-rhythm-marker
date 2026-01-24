@@ -16,7 +16,7 @@ namespace FaraRhythmMarker.Controllers
 #if BS_1_29_1
         private readonly IDifficultyBeatmap _difficultyBeatmap;
 #else
-        private readonly BeatmapLevel _beatmapLevel;
+        private readonly BeatmapLevel? _beatmapLevel;
 #endif
         private readonly GameplayCoreSceneSetupData _sceneSetupData;
         private readonly PlayerTransforms _playerTransforms;
@@ -33,7 +33,7 @@ namespace FaraRhythmMarker.Controllers
 #if BS_1_29_1
             IDifficultyBeatmap difficultyBeatmap,
 #else
-            BeatmapLevel beatmapLevel,
+            [InjectOptional] BeatmapLevel? beatmapLevel,
 #endif
             GameplayCoreSceneSetupData sceneSetupData,
             PlayerTransforms playerTransforms,
@@ -79,7 +79,7 @@ namespace FaraRhythmMarker.Controllers
 #if BS_1_29_1
                 njs = _difficultyBeatmap.noteJumpMovementSpeed;
 #else
-                njs = _beatmapLevel.beatsPerMinute; // Default NJS might be needed or derived
+                njs = 12f;
                 // In 1.34+, NJS is often in BeatmapObjectSpawnController.InitData
                 if (_spawnInitData != null)
                 {
@@ -120,7 +120,7 @@ namespace FaraRhythmMarker.Controllers
 #if BS_1_29_1
             float bpm = _difficultyBeatmap.level.beatsPerMinute;
 #else
-            float bpm = _beatmapLevel.beatsPerMinute;
+            float bpm = _beatmapLevel?.beatsPerMinute ?? 120f;
 #endif
             _model.Initialize(bpm);
             _model.OnBeat += OnBeatTriggered;

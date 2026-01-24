@@ -50,7 +50,14 @@ dotnet build -p:BSVersion=1.29.1
 dotnet build -p:BSVersion=1.40.8
 ```
 
-※ビルド前に `FaraRhythmMarker.csproj` 内の `<BeatSaberDir>` を自身の環境に合わせて書き換えてください。
+※ビルド前に `FaraRhythmMarker.csproj` 内の `<BeatSaberDir_1_29_1>` および `<BeatSaberDir_1_40_8>` を自身の環境に合わせて書き換えてください。指定した `BSVersion` に応じて適切なパスが選択されます。
+
+### バージョンごとの依存関係 (manifest.json)
+ビルド時に指定した `BSVersion` に応じて、適切な `manifest.json` が DLL に埋め込まれます。
+- `1.29.1` の場合: `manifest.1.29.1.json` が使用され、BSML 1.6.0 以上に依存します。
+- `1.40.8` の場合: `manifest.1.40.8.json` が使用され、BSML 1.11.0 以上に依存します。
+
+新しいバージョンに対応させる場合は、`manifest.<バージョン番号>.json` を作成することで、自動的にその設定が使用されるようになります。
 
 ## インストール方法
 
