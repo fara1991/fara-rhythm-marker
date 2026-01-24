@@ -33,7 +33,7 @@ You can change the following settings from the "Mod Settings" menu in-game.
 
 ## Requirements
 
-- Beat Saber 1.40.8 (may be compatible with later versions)
+- Beat Saber 1.29.1 (may be compatible with later versions)
 - BSIPA
 - SiraUtil
 - BeatSaberMarkupLanguage (BSML)

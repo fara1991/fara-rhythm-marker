@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FaraRhythmMarker")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.1.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.1.0+98daf64ef76e7711da89ad4d1152b31cd1440e47")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.1.0+ff363f6c76e002c786b3e57f3877d4b66bcb9bec")]
 [assembly: System.Reflection.AssemblyProductAttribute("FaraRhythmMarker")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FaraRhythmMarker")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.1.0.0")]

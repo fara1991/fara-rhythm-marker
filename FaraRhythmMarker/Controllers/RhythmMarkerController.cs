@@ -13,7 +13,11 @@ namespace FaraRhythmMarker.Controllers
     internal class RhythmMarkerController : IInitializable, ITickable, IDisposable
     {
         private readonly AudioTimeSyncController _audioTimeSyncController;
+#if BS_1_29_1
+        private readonly IDifficultyBeatmap _difficultyBeatmap;
+#else
         private readonly BeatmapLevel _beatmapLevel;
+#endif
         private readonly GameplayCoreSceneSetupData _sceneSetupData;
         private readonly PlayerTransforms _playerTransforms;
         private readonly IAudioTimeSource _audioTimeSource;
@@ -26,14 +30,22 @@ namespace FaraRhythmMarker.Controllers
 
         public RhythmMarkerController(
             AudioTimeSyncController audioTimeSyncController,
+#if BS_1_29_1
+            IDifficultyBeatmap difficultyBeatmap,
+#else
             BeatmapLevel beatmapLevel,
+#endif
             GameplayCoreSceneSetupData sceneSetupData,
             PlayerTransforms playerTransforms,
             IAudioTimeSource audioTimeSource,
             [InjectOptional] BeatmapObjectSpawnController.InitData? spawnInitData = null)
         {
             _audioTimeSyncController = audioTimeSyncController;
+#if BS_1_29_1
+            _difficultyBeatmap = difficultyBeatmap;
+#else
             _beatmapLevel = beatmapLevel;
+#endif
             _sceneSetupData = sceneSetupData;
             _playerTransforms = playerTransforms;
             _audioTimeSource = audioTimeSource;
@@ -64,16 +76,16 @@ namespace FaraRhythmMarker.Controllers
             try
             {
                 // NoteJumpMovementSpeed (NJS) の取得
-                // 1.40.8 では transformedBeatmapData や beatmapLevel.GetDifficultyBeatmapData から取得可能
-                var difficultyData = _sceneSetupData.beatmapLevel.GetDifficultyBeatmapData(_sceneSetupData.beatmapKey.beatmapCharacteristic, _sceneSetupData.beatmapKey.difficulty);
-                if (difficultyData != null)
-                {
-                    njs = difficultyData.noteJumpMovementSpeed;
-                }
-                else if (_spawnInitData != null)
+#if BS_1_29_1
+                njs = _difficultyBeatmap.noteJumpMovementSpeed;
+#else
+                njs = _beatmapLevel.beatsPerMinute; // Default NJS might be needed or derived
+                // In 1.34+, NJS is often in BeatmapObjectSpawnController.InitData
+                if (_spawnInitData != null)
                 {
                     njs = _spawnInitData.noteJumpMovementSpeed;
                 }
+#endif
 
                 if (_spawnInitData != null)
                 {
@@ -85,7 +97,7 @@ namespace FaraRhythmMarker.Controllers
                 var spawnCenter = GameObject.FindObjectOfType<BeatmapObjectSpawnCenter>();
                 if (spawnCenter != null)
                 {
-                    // BeatSaber 1.40.8 では、通常この spawnCenter の位置がプレイヤーの足元の基準（Z=0付近）に相当する。
+                    // BeatSaber 1.29.1 では、通常この spawnCenter の位置がプレイヤーの足元の基準（Z=0付近）に相当する。
                     // ユーザーのフィードバックに基づき、ノーツを切る位置の感覚に合わせるため
                     // プレイヤー足場の前面付近（約 0.5m 奥）にヒット位置をオフセットする。
                     _view.HitZOffset = spawnCenter.transform.position.z + 0.5f; 
@@ -105,12 +117,16 @@ namespace FaraRhythmMarker.Controllers
             }
 
             // Initialize Model
+#if BS_1_29_1
+            float bpm = _difficultyBeatmap.level.beatsPerMinute;
+#else
             float bpm = _beatmapLevel.beatsPerMinute;
+#endif
             _model.Initialize(bpm);
             _model.OnBeat += OnBeatTriggered;
 
             // Initialize View
-            _view.Initialize(_audioTimeSyncController, _sceneSetupData, _playerTransforms, njs);
+            _view.Initialize(_audioTimeSyncController, _playerTransforms, njs);
             
             Plugin.Log.Info($"RhythmMarkerController initialized: {_model.GetMarkersPerMinute()} markers/min, HitZOffset: {_view.HitZOffset}, NJS: {njs}");
         }

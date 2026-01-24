@@ -33,10 +33,24 @@ Beat Saberのプレイ中に、一定のビート間隔で流れてくるリズ�
 
 ## 動作要件
 
-- Beat Saber 1.40.8 (以降のバージョンでも互換性がある可能性があります)
+- Beat Saber 1.29.1 または 1.40.8 (および 1.34 以降)
 - BSIPA
 - SiraUtil
 - BeatSaberMarkupLanguage (BSML)
+
+## ビルド方法
+
+特定のバージョン向けにビルドする場合は、`BSVersion` プロパティを指定して `dotnet build` を実行してください。
+
+```bash
+# 1.29.1 向け (デフォルト)
+dotnet build -p:BSVersion=1.29.1
+
+# 1.40.8 向け
+dotnet build -p:BSVersion=1.40.8
+```
+
+※ビルド前に `FaraRhythmMarker.csproj` 内の `<BeatSaberDir>` を自身の環境に合わせて書き換えてください。
 
 ## インストール方法
 
@@ -69,7 +83,21 @@ The markers move in sync with the song's Note Jump Speed (NJS), helping you visu
 
 ## Requirements
 
-- Beat Saber 1.40.8
+- Beat Saber 1.29.1 or 1.40.8 (and 1.34+)
 - BSIPA
 - SiraUtil
 - BeatSaberMarkupLanguage (BSML)
+
+## Building
+
+To build for a specific version, use `dotnet build` with the `BSVersion` property.
+
+```bash
+# For 1.29.1 (Default)
+dotnet build -p:BSVersion=1.29.1
+
+# For 1.40.8
+dotnet build -p:BSVersion=1.40.8
+```
+
+Note: Make sure to update the `<BeatSaberDir>` in `FaraRhythmMarker.csproj` to point to your Beat Saber installation directory before building.

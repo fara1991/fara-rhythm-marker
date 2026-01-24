@@ -30,7 +30,6 @@ namespace FaraRhythmMarker.Views
 
         private List<MarkerInstance> _activeMarkers = new List<MarkerInstance>();
         private AudioTimeSyncController? _audioTimeSyncController;
-        private GameplayCoreSceneSetupData? _sceneSetupData;
         private PlayerTransforms? _playerTransforms;
 
         private GameObject? _leftSideLightObj;
@@ -49,12 +48,11 @@ namespace FaraRhythmMarker.Views
 
         public float HitZOffset { get; set; } = 0.5f;
 
-        public void Initialize(AudioTimeSyncController audioTimeSyncController, GameplayCoreSceneSetupData sceneSetupData, PlayerTransforms playerTransforms, float njs)
+        public void Initialize(AudioTimeSyncController audioTimeSyncController, PlayerTransforms playerTransforms, float njs)
         {
             try
             {
                 _audioTimeSyncController = audioTimeSyncController;
-                _sceneSetupData = sceneSetupData;
                 _playerTransforms = playerTransforms;
                 _njs = njs;
 
