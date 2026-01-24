@@ -38,6 +38,9 @@ namespace FaraRhythmMarker.Views
         private LineRenderer? _leftSideLine;
         private LineRenderer? _rightSideLine;
 
+        private GameObject? _guideMarkerObj;
+        private LineRenderer? _guideLine;
+
         private float _njs = 10f;
 
         private Shader? _markerShader;
@@ -63,6 +66,7 @@ namespace FaraRhythmMarker.Views
                 if (PluginConfig.Instance.Enabled)
                 {
                     CreateSideLights();
+                    CreateGuideMarker();
                 }
 
                 Plugin.Log.Info($"MarkerView initialized for moving markers. NJS: {_njs}");
@@ -83,11 +87,38 @@ namespace FaraRhythmMarker.Views
             _rightSideLightObj = CreateConstantLightLine("FaraSideLight_R", new Vector3(xOffset, yPos, 0), purple, out _rightSideLine);
         }
 
+        private void CreateGuideMarker()
+        {
+            float xOffset = 1.5f;
+            float yPos = 0.05f;
+            Color white = Color.white;
+
+            _guideMarkerObj = new GameObject("FaraGuideMarker");
+            _guideLine = _guideMarkerObj.AddComponent<LineRenderer>();
+            // ガイドマーカーは常に表示され、奥に配置するため ZWrite=true, renderQueue=2900 にする
+            SetupLineRenderer(_guideLine, true);
+            
+            // ガイドマーカーは常に表示されるので、不透明度を設定
+            float alpha = PluginConfig.Instance.MarkerOpacity * 0.8f; // 少し控えめに表示
+            Color guideColor = new Color(white.r, white.g, white.b, alpha);
+            
+            _guideLine.startColor = guideColor;
+            _guideLine.endColor = guideColor;
+            _guideLine.startWidth = 0.03f; // 動くマーカー(0.05)より少し細くする
+            _guideLine.endWidth = 0.03f;
+
+            // 位置はUpdateMarkersでHitZOffsetに合わせて設定される
+            _guideLine.SetPosition(0, new Vector3(-xOffset, yPos, HitZOffset));
+            _guideLine.SetPosition(1, new Vector3(xOffset, yPos, HitZOffset));
+
+            UnityEngine.Object.DontDestroyOnLoad(_guideMarkerObj);
+        }
+
         private GameObject CreateConstantLightLine(string name, Vector3 basePosition, Color color, out LineRenderer line)
         {
             var obj = new GameObject(name);
             line = obj.AddComponent<LineRenderer>();
-            SetupLineRenderer(line);
+            SetupLineRenderer(line, true); // サイドライトも奥(下地)として扱う
             
             // 初期位置 (Updateでプレイヤー位置に合わせて更新される)
             line.SetPosition(0, new Vector3(basePosition.x, basePosition.y, -1f));
@@ -158,15 +189,15 @@ namespace FaraRhythmMarker.Views
                 UpdateMarkerPosition(marker, _audioTimeSyncController.songTime);
         }
 
-        private void SetupLineRenderer(LineRenderer line)
+        private void SetupLineRenderer(LineRenderer line, bool writeZ = false)
         {
             if (_markerShader != null)
             {
                 var mat = new Material(_markerShader);
                 mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
                 mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                mat.SetInt("_ZWrite", 0);
-                mat.renderQueue = 3000;
+                mat.SetInt("_ZWrite", writeZ ? 1 : 0);
+                mat.renderQueue = writeZ ? 2900 : 3000; // writeZが真なら少し手前のキューにする
                 line.material = mat;
             }
             line.startWidth = 0.05f;
@@ -188,7 +219,7 @@ namespace FaraRhythmMarker.Views
                 mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
                 mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
                 mat.SetInt("_ZWrite", 0);
-                mat.renderQueue = 3000;
+                mat.renderQueue = 3010; // ライン(3000)よりさらに手前に表示
                 renderer.material = mat;
             }
 
@@ -223,6 +254,12 @@ namespace FaraRhythmMarker.Views
                 {
                     _rightSideLine.SetPosition(0, new Vector3(xOffset, yPos, zStart));
                     _rightSideLine.SetPosition(1, new Vector3(xOffset, yPos, zEnd));
+                }
+
+                if (_guideLine != null)
+                {
+                    _guideLine.SetPosition(0, new Vector3(-xOffset, yPos, HitZOffset));
+                    _guideLine.SetPosition(1, new Vector3(xOffset, yPos, HitZOffset));
                 }
             }
 
@@ -321,6 +358,7 @@ namespace FaraRhythmMarker.Views
 
             if (_leftSideLightObj != null) UnityEngine.Object.Destroy(_leftSideLightObj);
             if (_rightSideLightObj != null) UnityEngine.Object.Destroy(_rightSideLightObj);
+            if (_guideMarkerObj != null) UnityEngine.Object.Destroy(_guideMarkerObj);
 
             IsInitialized = false;
         }

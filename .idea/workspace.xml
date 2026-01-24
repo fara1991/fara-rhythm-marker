@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a80a908c-308a-43f7-a54c-d15ee6a53956" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="a80a908c-308a-43f7-a54c-d15ee6a53956" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -111,7 +109,7 @@
       <workItem from="1768759848535" duration="7846000" />
       <workItem from="1768790630653" duration="11000" />
       <workItem from="1768790719488" duration="7511000" />
-      <workItem from="1769104708665" duration="1628000" />
+      <workItem from="1769104708665" duration="9856000" />
     </task>
     <task id="LOCAL-00001" summary="Update FaraRhythmMarker">
       <option name="closed" value="true" />
