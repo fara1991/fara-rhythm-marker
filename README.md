@@ -1,6 +1,6 @@
 # FaraRhythmMarker
 
-Beat Saberのプレイ中に、一定のビート間隔で流れてくるリズムマーカーを表示するプラグインです。
+Beat Saber 1.29.1 および 1.40.8 に対応した、プレイ中に一定のビート間隔で流れてくるリズムマーカーを表示するプラグインです。
 ノーツの流れる速度（NJS）と同期してマーカーが移動するため、リズムを視覚的に把握しやすくなります。
 
 ## 主な機能
@@ -33,10 +33,31 @@ Beat Saberのプレイ中に、一定のビート間隔で流れてくるリズ�
 
 ## 動作要件
 
-- Beat Saber 1.40.8 (以降のバージョンでも互換性がある可能性があります)
+- Beat Saber 1.29.1 / 1.40.8
 - BSIPA
 - SiraUtil
 - BeatSaberMarkupLanguage (BSML)
+
+## ビルド方法
+
+特定のバージョン向けにビルドする場合は、`BSVersion` プロパティを指定して `dotnet build` を実行してください。
+
+```bash
+# 1.29.1 向け (デフォルト)
+dotnet build -p:BSVersion=1.29.1
+
+# 1.40.8 向け
+dotnet build -p:BSVersion=1.40.8
+```
+
+※ビルド前に `FaraRhythmMarker.csproj` 内の `<BeatSaberDir_1_29_1>` および `<BeatSaberDir_1_40_8>` を自身の環境に合わせて書き換えてください。指定した `BSVersion` に応じて適切なパスが選択されます。
+
+### バージョンごとの依存関係 (manifest.json)
+ビルド時に指定した `BSVersion` に応じて、適切な `manifest.json` が DLL に埋め込まれます。
+- `1.29.1` の場合: `manifest.1.29.1.json` が使用され、BSML 1.6.0 以上に依存します。
+- `1.40.8` の場合: `manifest.1.40.8.json` が使用され、BSML 1.11.0 以上に依存します。
+
+新しいバージョンに対応させる場合は、`manifest.<バージョン番号>.json` を作成することで、自動的にその設定が使用されるようになります。
 
 ## インストール方法
 
@@ -47,7 +68,7 @@ Beat Saberのプレイ中に、一定のビート間隔で流れてくるリズ�
 
 # FaraRhythmMarker (English)
 
-A Beat Saber plugin that displays rhythm markers flowing at specified beat intervals.
+A Beat Saber (1.29.1 / 1.40.8) plugin that displays rhythm markers flowing at specified beat intervals.
 The markers move in sync with the song's Note Jump Speed (NJS), helping you visualize the rhythm more effectively.
 
 ## Features
@@ -69,7 +90,21 @@ The markers move in sync with the song's Note Jump Speed (NJS), helping you visu
 
 ## Requirements
 
-- Beat Saber 1.40.8
+- Beat Saber 1.29.1 / 1.40.8
 - BSIPA
 - SiraUtil
 - BeatSaberMarkupLanguage (BSML)
+
+## Building
+
+To build for a specific version, use `dotnet build` with the `BSVersion` property.
+
+```bash
+# For 1.29.1 (Default)
+dotnet build -p:BSVersion=1.29.1
+
+# For 1.40.8
+dotnet build -p:BSVersion=1.40.8
+```
+
+Note: Make sure to update the `<BeatSaberDir>` in `FaraRhythmMarker.csproj` to point to your Beat Saber installation directory before building.
