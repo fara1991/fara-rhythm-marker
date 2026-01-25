@@ -1,6 +1,6 @@
 # FaraRhythmMarker
 
-Beat Saberのプレイ中に、一定のビート間隔で流れてくるリズムマーカーを表示するプラグインです。
+Beat Saber 1.29.1 および 1.40.8 に対応した、プレイ中に一定のビート間隔で流れてくるリズムマーカーを表示するプラグインです。
 ノーツの流れる速度（NJS）と同期してマーカーが移動するため、リズムを視覚的に把握しやすくなります。
 
 ## 主な機能
@@ -33,7 +33,7 @@ Beat Saberのプレイ中に、一定のビート間隔で流れてくるリズ�
 
 ## 動作要件
 
-- Beat Saber 1.29.1 または 1.40.8 (および 1.34 以降)
+- Beat Saber 1.29.1 / 1.40.8
 - BSIPA
 - SiraUtil
 - BeatSaberMarkupLanguage (BSML)
@@ -68,7 +68,7 @@ dotnet build -p:BSVersion=1.40.8
 
 # FaraRhythmMarker (English)
 
-A Beat Saber plugin that displays rhythm markers flowing at specified beat intervals.
+A Beat Saber (1.29.1 / 1.40.8) plugin that displays rhythm markers flowing at specified beat intervals.
 The markers move in sync with the song's Note Jump Speed (NJS), helping you visualize the rhythm more effectively.
 
 ## Features
@@ -90,7 +90,7 @@ The markers move in sync with the song's Note Jump Speed (NJS), helping you visu
 
 ## Requirements
 
-- Beat Saber 1.29.1 or 1.40.8 (and 1.34+)
+- Beat Saber 1.29.1 / 1.40.8
 - BSIPA
 - SiraUtil
 - BeatSaberMarkupLanguage (BSML)

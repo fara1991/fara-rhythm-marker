@@ -1,6 +1,6 @@
 ﻿# FaraRhythmMarker
 
-A Beat Saber plugin that displays rhythm markers flowing at specified beat intervals.
+A Beat Saber (1.29.1 / 1.40.8) plugin that displays rhythm markers flowing at specified beat intervals.
 The markers move in sync with the song's Note Jump Speed (NJS), helping you visualize the rhythm more effectively.
 
 ## Features
@@ -33,7 +33,7 @@ You can change the following settings from the "Mod Settings" menu in-game.
 
 ## Requirements
 
-- Beat Saber 1.29.1 (may be compatible with later versions)
+- Beat Saber 1.29.1 / 1.40.8
 - BSIPA
 - SiraUtil
 - BeatSaberMarkupLanguage (BSML)
