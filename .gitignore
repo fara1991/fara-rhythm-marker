@@ -101,5 +101,9 @@ InitTestScene*.unity*
 .claude/
 FaraRhythmMarker/bin/*
 FaraRhythmMarker/obj/*
+FaraRhythmMarker/Refs/*
+
+# Keep csproj tracked (override Unity template)
+!FaraRhythmMarker/*.csproj
 
 SKILL.md

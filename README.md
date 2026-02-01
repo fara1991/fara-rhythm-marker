@@ -5,10 +5,13 @@ Beat Saber 1.29.1 および 1.40.8 に対応した、プレイ中に一定のビ
 
 ## 主な機能
 
-- **動的なリズムマーカー**: 
+- **動的なリズムマーカー**:
   - 譜面のNote Jump Speed (NJS) と同期して、奥から手前へ移動します。
   - ノーツのヒット位置（通常はプレイヤーの足元付近、譜面の基本設定に依存）に到達した瞬間に消滅し、正確なリズムガイドとして機能します。
   - 常に4ビート先までのマーカーが表示されるため、リズムの予見が可能です。
+- **BPM変更対応**:
+  - 曲中のBPM変更イベントを自動検出します。
+  - BPMが変わるとマーカーの移動速度も自動的に調整されます。
 - **曲開始との同期**:
   - 曲のカウントダウン終了後、音楽が実際に始まったタイミングを「0ビート目」として正確に同期します。
 - **カスタマイズ可能なビート間隔**:
@@ -18,7 +21,8 @@ Beat Saber 1.29.1 および 1.40.8 に対応した、プレイ中に一定のビ
 - **サイドガイドライト**:
   - 左右の端に常設の紫色のラインを表示します（Enabled設定に連動）。
 - **詳細なビジュアル設定**:
-  - マーカーのサイズ、不透明度、色のカスタマイズが可能です。
+  - マーカーのサイズ、不透明度、フラッシュ時間、色のカスタマイズが可能です。
+  - Z軸オフセットでオーディオレイテンシーに合わせた微調整が可能です。
 
 ## 設定項目
 
@@ -30,13 +34,30 @@ Beat Saber 1.29.1 および 1.40.8 に対応した、プレイ中に一定のビ
 - **Colors (1-4)**: 各スロットの色設定。
 - **Marker Opacity**: マーカーの不透明度。
 - **Marker Size**: マーカーの大きさ。
+- **Flash Duration**: マーカーがヒット位置で光る時間（秒）。
+- **Marker Z Offset**: オーディオレイテンシー補正用のZ軸オフセット。
+- **Z Offset Step**: Zオフセットの調整ステップ幅。
 
 ## 動作要件
 
-- Beat Saber 1.29.1 / 1.40.8
-- BSIPA
-- SiraUtil
-- BeatSaberMarkupLanguage (BSML)
+### Beat Saber 1.29.1
+| Mod | バージョン |
+|-----|-----------|
+| BSIPA | 4.2.0 以上 |
+| SiraUtil | 3.1.0 以上 |
+| BeatSaberMarkupLanguage (BSML) | 1.6.0 以上 |
+
+### Beat Saber 1.40.8
+| Mod | バージョン |
+|-----|-----------|
+| BSIPA | 4.3.0 以上 |
+| SiraUtil | 3.1.0 以上 |
+| BeatSaberMarkupLanguage (BSML) | 1.11.0 以上 |
+
+## インストール方法
+
+1. [リリースページ](../../releases)から対象のBeat Saberバージョンに合った `FaraRhythmMarker-vX.X.X-BSXXX.zip` をダウンロードします。
+2. zipを解凍し、`FaraRhythmMarker.dll` をBeat Saberのインストールフォルダ内の `Plugins` フォルダに配置してください。
 
 ## ビルド方法
 
@@ -59,52 +80,17 @@ dotnet build -p:BSVersion=1.40.8
 
 新しいバージョンに対応させる場合は、`manifest.<バージョン番号>.json` を作成することで、自動的にその設定が使用されるようになります。
 
-## インストール方法
+## GitHub Actions
 
-1. リリースページから最新の `FaraRhythmMarker.dll` をダウンロードします。
-2. Beat Saberのインストールフォルダ内の `Plugins` フォルダに配置してください。
+このリポジトリにはGitHub Actionsによる自動リリースワークフローが含まれています。
 
----
+1. GitHubの **Actions** タブで **Build and Release** を選択
+2. **Run workflow** をクリック
+3. ブランチ、タグ（例: `v1.0.0`）、Beat Saberバージョンを指定
+4. Releaseページに自動でDLLがアップロードされます
 
-# FaraRhythmMarker (English)
+詳細は [.github/CI_SETUP.md](.github/CI_SETUP.md) を参照してください。
 
-A Beat Saber (1.29.1 / 1.40.8) plugin that displays rhythm markers flowing at specified beat intervals.
-The markers move in sync with the song's Note Jump Speed (NJS), helping you visualize the rhythm more effectively.
+## ライセンス
 
-## Features
-
-- **Dynamic Rhythm Markers**:
-  - Fully synchronized with Note Jump Speed (NJS).
-  - Markers move from the distance and disappear exactly at the note hit position (usually near the player's feet, depending on map settings).
-  - Displays markers up to 4 beats ahead for better preparation.
-- **Song Start Sync**:
-  - Automatically detects the actual song start and sets it as "Beat 0".
-- **Customizable Beat Divisions**:
-  - Choose between 1/4, 1/2, 1, or 2 beat intervals.
-- **Multiple Color Modes**:
-  - Cycle through 1, 2, or 4 different colors.
-- **Side Guide Lights**:
-  - Constant purple lines on both sides to help with orientation (controlled by the Enabled setting).
-- **Visual Customization**:
-  - Adjust marker size, opacity, and individual colors.
-
-## Requirements
-
-- Beat Saber 1.29.1 / 1.40.8
-- BSIPA
-- SiraUtil
-- BeatSaberMarkupLanguage (BSML)
-
-## Building
-
-To build for a specific version, use `dotnet build` with the `BSVersion` property.
-
-```bash
-# For 1.29.1 (Default)
-dotnet build -p:BSVersion=1.29.1
-
-# For 1.40.8
-dotnet build -p:BSVersion=1.40.8
-```
-
-Note: Make sure to update the `<BeatSaberDir>` in `FaraRhythmMarker.csproj` to point to your Beat Saber installation directory before building.
+MIT License
