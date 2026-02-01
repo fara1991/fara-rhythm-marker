@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using FaraRhythmMarker.Configuration;
 using FaraRhythmMarker.Models;
 using FaraRhythmMarker.Views;
@@ -21,6 +22,7 @@ namespace FaraRhythmMarker.Controllers
         private readonly GameplayCoreSceneSetupData _sceneSetupData;
         private readonly PlayerTransforms _playerTransforms;
         private readonly IAudioTimeSource _audioTimeSource;
+        private readonly IReadonlyBeatmapData? _beatmapData;
 
         private readonly BeatmapObjectSpawnController.InitData? _spawnInitData;
         private readonly BeatmapObjectSpawnController? _spawnController;
@@ -39,6 +41,7 @@ namespace FaraRhythmMarker.Controllers
             GameplayCoreSceneSetupData sceneSetupData,
             PlayerTransforms playerTransforms,
             IAudioTimeSource audioTimeSource,
+            [InjectOptional] IReadonlyBeatmapData? beatmapData = null,
             [InjectOptional] BeatmapObjectSpawnController.InitData? spawnInitData = null,
             [InjectOptional] BeatmapObjectSpawnController? spawnController = null)
         {
@@ -51,6 +54,7 @@ namespace FaraRhythmMarker.Controllers
             _sceneSetupData = sceneSetupData;
             _playerTransforms = playerTransforms;
             _audioTimeSource = audioTimeSource;
+            _beatmapData = beatmapData;
             _spawnInitData = spawnInitData;
             _spawnController = spawnController;
 
@@ -66,7 +70,6 @@ namespace FaraRhythmMarker.Controllers
             if (!PluginConfig.Instance.Enabled)
             {
                 Plugin.Log.Info("RhythmMarkerController: Disabled by config, skipping initialization");
-                // Make sure view is disposed if it was previously initialized
                 if (_view.IsInitialized)
                 {
                     _view.Dispose();
@@ -74,16 +77,44 @@ namespace FaraRhythmMarker.Controllers
                 return;
             }
 
-            // Get NJS from sceneSetupData
+            float njs = InitializeNjsAndHitPosition();
+
+            // 設定からのZ座標オフセットを適用
+            float configZOffset = PluginConfig.Instance.MarkerZOffset;
+            _view.HitZOffset += configZOffset;
+            Plugin.Log.Info($"Applied config MarkerZOffset: {configZOffset}. Final HitZOffset: {_view.HitZOffset}");
+
+            // Initialize Model
+#if BS_1_29_1
+            float bpm = _difficultyBeatmap.level.beatsPerMinute;
+            float songDuration = _difficultyBeatmap.level.songDuration;
+#else
+            float bpm = _beatmapLevel?.beatsPerMinute ?? 120f;
+            float songDuration = _audioTimeSyncController.songLength;
+#endif
+
+            var bpmChanges = ExtractBpmChanges(bpm);
+
+            _model.Initialize(bpm);
+            _model.SetBpmChanges(bpmChanges, songDuration);
+            _model.OnBeat += OnBeatTriggered;
+
+            _view.Initialize(_audioTimeSyncController, _playerTransforms, njs, bpm, _model.GetBpmAtTime);
+
+            Plugin.Log.Info($"RhythmMarkerController initialized: {_model.GetMarkersPerMinute()} markers/min, HitZOffset: {_view.HitZOffset}, NJS: {njs}, BPM Changes: {bpmChanges.Count}");
+        }
+
+        /// <summary>
+        /// NJSとヒット位置を初期化する
+        /// </summary>
+        private float InitializeNjsAndHitPosition()
+        {
             float njs = 12f;
             try
             {
-                // NoteJumpMovementSpeed (NJS) の取得
 #if BS_1_29_1
                 njs = _difficultyBeatmap.noteJumpMovementSpeed;
 #else
-                njs = 12f;
-                // In 1.34+, NJS is often in BeatmapObjectSpawnController.InitData
                 if (_spawnInitData != null)
                 {
                     njs = _spawnInitData.noteJumpMovementSpeed;
@@ -95,166 +126,15 @@ namespace FaraRhythmMarker.Controllers
                     Plugin.Log.Info($"SpawnInitData: noteJumpValue={_spawnInitData.noteJumpValue}, noteJumpValueType={_spawnInitData.noteJumpValueType}, NJS={_spawnInitData.noteJumpMovementSpeed}");
                 }
 
-                // BeatmapObjectSpawnController から jumpEndPos（ノーツのカット位置）を取得
-                bool foundJumpEndPos = false;
+                bool foundJumpEndPos = TryGetJumpEndPos();
 
-                // まず注入されたコントローラーを試す、なければFindObjectOfTypeで探す
-                var spawnController = _spawnController ?? GameObject.FindObjectOfType<BeatmapObjectSpawnController>();
-
-                if (spawnController != null)
-                {
-                    Plugin.Log.Info($"Found BeatmapObjectSpawnController: {spawnController.name}");
-                    try
-                    {
-                        // リフレクションを使用して _beatmapObjectSpawnMovementData フィールドにアクセス
-                        var spawnControllerType = spawnController.GetType();
-
-                        // 複数のフィールド名パターンを試す
-                        string[] fieldNames = { "_beatmapObjectSpawnMovementData", "_spawnMovementData", "beatmapObjectSpawnMovementData" };
-                        object? movementData = null;
-
-                        foreach (var fieldName in fieldNames)
-                        {
-                            var field = spawnControllerType.GetField(fieldName,
-                                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                            if (field != null)
-                            {
-                                movementData = field.GetValue(spawnController);
-                                if (movementData != null)
-                                {
-                                    Plugin.Log.Info($"Found movement data via field: {fieldName}");
-                                    break;
-                                }
-                            }
-                        }
-
-                        // プロパティも試す
-                        if (movementData == null)
-                        {
-                            var props = spawnControllerType.GetProperties(
-                                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                            foreach (var prop in props)
-                            {
-                                if (prop.Name.ToLower().Contains("movementdata") || prop.Name.ToLower().Contains("spawn"))
-                                {
-                                    try
-                                    {
-                                        movementData = prop.GetValue(spawnController);
-                                        if (movementData != null)
-                                        {
-                                            Plugin.Log.Info($"Found movement data via property: {prop.Name}");
-                                            break;
-                                        }
-                                    }
-                                    catch { }
-                                }
-                            }
-                        }
-
-                        if (movementData != null)
-                        {
-                            var movementDataType = movementData.GetType();
-                            Plugin.Log.Info($"Movement data type: {movementDataType.FullName}");
-
-                            // jumpEndPos を探す（プロパティとフィールド両方）
-                            object? jumpEndPosValue = null;
-
-                            var jumpEndPosProperty = movementDataType.GetProperty("jumpEndPos",
-                                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                            if (jumpEndPosProperty != null)
-                            {
-                                jumpEndPosValue = jumpEndPosProperty.GetValue(movementData);
-                                Plugin.Log.Info($"Found jumpEndPos as property");
-                            }
-
-                            if (jumpEndPosValue == null)
-                            {
-                                var jumpEndPosField = movementDataType.GetField("jumpEndPos",
-                                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                                if (jumpEndPosField != null)
-                                {
-                                    jumpEndPosValue = jumpEndPosField.GetValue(movementData);
-                                    Plugin.Log.Info($"Found jumpEndPos as field");
-                                }
-                            }
-
-                            // _jumpEndPos も試す
-                            if (jumpEndPosValue == null)
-                            {
-                                var jumpEndPosField = movementDataType.GetField("_jumpEndPos",
-                                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                                if (jumpEndPosField != null)
-                                {
-                                    jumpEndPosValue = jumpEndPosField.GetValue(movementData);
-                                    Plugin.Log.Info($"Found _jumpEndPos as field");
-                                }
-                            }
-
-                            if (jumpEndPosValue is Vector3 jumpEndPos)
-                            {
-                                _view.HitZOffset = jumpEndPos.z;
-                                foundJumpEndPos = true;
-                                Plugin.Log.Info($"Got jumpEndPos: {jumpEndPos}. Set HitZOffset to: {_view.HitZOffset}");
-                            }
-                            else
-                            {
-                                // 利用可能なメンバーをログに出力（デバッグ用）
-                                Plugin.Log.Info($"jumpEndPos not found. Available members in {movementDataType.Name}:");
-                                foreach (var member in movementDataType.GetMembers(
-                                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
-                                {
-                                    if (member.Name.ToLower().Contains("jump") || member.Name.ToLower().Contains("pos") || member.Name.ToLower().Contains("end"))
-                                    {
-                                        Plugin.Log.Info($"  - {member.MemberType}: {member.Name}");
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            Plugin.Log.Warn("Movement data not found in BeatmapObjectSpawnController");
-                            // 利用可能なフィールドをログに出力
-                            Plugin.Log.Info($"Available fields in {spawnControllerType.Name}:");
-                            foreach (var field in spawnControllerType.GetFields(
-                                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
-                            {
-                                Plugin.Log.Info($"  - Field: {field.Name} ({field.FieldType.Name})");
-                            }
-                        }
-                    }
-                    catch (Exception reflectionEx)
-                    {
-                        Plugin.Log.Warn($"Failed to get jumpEndPos via reflection: {reflectionEx.Message}");
-                    }
-                }
-                else
-                {
-                    Plugin.Log.Warn("BeatmapObjectSpawnController not found (neither injected nor via FindObjectOfType)");
-                }
-
-                // フォールバック: BeatmapObjectSpawnCenter を使用
                 if (!foundJumpEndPos)
                 {
-                    var spawnCenter = GameObject.FindObjectOfType<BeatmapObjectSpawnCenter>();
-                    if (spawnCenter != null)
-                    {
-                        // spawnCenter の位置をそのまま使用（オフセットなし）
-                        _view.HitZOffset = spawnCenter.transform.position.z;
-                        Plugin.Log.Info($"Fallback: Found BeatmapObjectSpawnCenter at Z: {spawnCenter.transform.position.z}. Set HitZOffset to: {_view.HitZOffset}");
-                    }
-                    else
-                    {
-                        // デフォルトのヒット位置
-                        _view.HitZOffset = 0f;
-                        Plugin.Log.Info($"Fallback: BeatmapObjectSpawnCenter not found, using default HitZOffset: 0");
-                    }
-
-                    // jumpEndPos が取得できなかった場合のみ、足場の座標を使用
+                    ApplyFallbackHitPosition();
                     TryGetPlatformBounds();
                 }
                 else
                 {
-                    // jumpEndPos が取得できた場合は、足場からはX幅のみ取得
                     TryGetPlatformXOffset();
                 }
             }
@@ -264,24 +144,187 @@ namespace FaraRhythmMarker.Controllers
                 _view.HitZOffset = 0f;
             }
 
-            // 設定からのZ座標オフセットを適用
-            float configZOffset = PluginConfig.Instance.MarkerZOffset;
-            _view.HitZOffset += configZOffset;
-            Plugin.Log.Info($"Applied config MarkerZOffset: {configZOffset}. Final HitZOffset: {_view.HitZOffset}");
+            return njs;
+        }
 
-            // Initialize Model
-#if BS_1_29_1
-            float bpm = _difficultyBeatmap.level.beatsPerMinute;
-#else
-            float bpm = _beatmapLevel?.beatsPerMinute ?? 120f;
-#endif
-            _model.Initialize(bpm);
-            _model.OnBeat += OnBeatTriggered;
+        /// <summary>
+        /// BeatmapObjectSpawnControllerからjumpEndPosを取得する
+        /// </summary>
+        private bool TryGetJumpEndPos()
+        {
+            var spawnController = _spawnController ?? GameObject.FindObjectOfType<BeatmapObjectSpawnController>();
+            if (spawnController == null)
+            {
+                Plugin.Log.Warn("BeatmapObjectSpawnController not found");
+                return false;
+            }
 
-            // Initialize View
-            _view.Initialize(_audioTimeSyncController, _playerTransforms, njs);
-            
-            Plugin.Log.Info($"RhythmMarkerController initialized: {_model.GetMarkersPerMinute()} markers/min, HitZOffset: {_view.HitZOffset}, NJS: {njs}");
+            Plugin.Log.Info($"Found BeatmapObjectSpawnController: {spawnController.name}");
+
+            try
+            {
+                var movementData = GetMovementData(spawnController);
+                if (movementData == null)
+                {
+                    LogAvailableFields(spawnController.GetType());
+                    return false;
+                }
+
+                var jumpEndPosValue = GetJumpEndPosFromMovementData(movementData);
+                if (jumpEndPosValue is Vector3 jumpEndPos)
+                {
+                    _view.HitZOffset = jumpEndPos.z;
+                    Plugin.Log.Info($"Got jumpEndPos: {jumpEndPos}. Set HitZOffset to: {_view.HitZOffset}");
+                    return true;
+                }
+
+                LogAvailableMembers(movementData.GetType());
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Warn($"Failed to get jumpEndPos via reflection: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// SpawnControllerからMovementDataを取得する
+        /// </summary>
+        private object? GetMovementData(BeatmapObjectSpawnController spawnController)
+        {
+            var spawnControllerType = spawnController.GetType();
+            string[] fieldNames = { "_beatmapObjectSpawnMovementData", "_spawnMovementData", "beatmapObjectSpawnMovementData" };
+
+            // フィールドから取得を試みる
+            foreach (var fieldName in fieldNames)
+            {
+                var field = spawnControllerType.GetField(fieldName,
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                if (field != null)
+                {
+                    var value = field.GetValue(spawnController);
+                    if (value != null)
+                    {
+                        Plugin.Log.Info($"Found movement data via field: {fieldName}");
+                        return value;
+                    }
+                }
+            }
+
+            // プロパティから取得を試みる
+            var props = spawnControllerType.GetProperties(
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            foreach (var prop in props)
+            {
+                if (prop.Name.ToLower().Contains("movementdata") || prop.Name.ToLower().Contains("spawn"))
+                {
+                    try
+                    {
+                        var value = prop.GetValue(spawnController);
+                        if (value != null)
+                        {
+                            Plugin.Log.Info($"Found movement data via property: {prop.Name}");
+                            return value;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Plugin.Log.Debug($"Failed to get property {prop.Name}: {ex.Message}");
+                    }
+                }
+            }
+
+            Plugin.Log.Warn("Movement data not found in BeatmapObjectSpawnController");
+            return null;
+        }
+
+        /// <summary>
+        /// MovementDataからjumpEndPosを取得する
+        /// </summary>
+        private object? GetJumpEndPosFromMovementData(object movementData)
+        {
+            var movementDataType = movementData.GetType();
+            Plugin.Log.Info($"Movement data type: {movementDataType.FullName}");
+
+            string[] propertyNames = { "jumpEndPos", "_jumpEndPos" };
+            var bindingFlags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+
+            foreach (var name in propertyNames)
+            {
+                // プロパティを試す
+                var prop = movementDataType.GetProperty(name, bindingFlags);
+                if (prop != null)
+                {
+                    var value = prop.GetValue(movementData);
+                    if (value != null)
+                    {
+                        Plugin.Log.Info($"Found {name} as property");
+                        return value;
+                    }
+                }
+
+                // フィールドを試す
+                var field = movementDataType.GetField(name, bindingFlags);
+                if (field != null)
+                {
+                    var value = field.GetValue(movementData);
+                    if (value != null)
+                    {
+                        Plugin.Log.Info($"Found {name} as field");
+                        return value;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// フォールバックのヒット位置を適用する
+        /// </summary>
+        private void ApplyFallbackHitPosition()
+        {
+            var spawnCenter = GameObject.FindObjectOfType<BeatmapObjectSpawnCenter>();
+            if (spawnCenter != null)
+            {
+                _view.HitZOffset = spawnCenter.transform.position.z;
+                Plugin.Log.Info($"Fallback: Found BeatmapObjectSpawnCenter at Z: {spawnCenter.transform.position.z}");
+            }
+            else
+            {
+                _view.HitZOffset = 0f;
+                Plugin.Log.Info($"Fallback: Using default HitZOffset: 0");
+            }
+        }
+
+        /// <summary>
+        /// デバッグ用: 利用可能なフィールドをログに出力
+        /// </summary>
+        private void LogAvailableFields(Type type)
+        {
+            Plugin.Log.Info($"Available fields in {type.Name}:");
+            foreach (var field in type.GetFields(
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
+            {
+                Plugin.Log.Info($"  - Field: {field.Name} ({field.FieldType.Name})");
+            }
+        }
+
+        /// <summary>
+        /// デバッグ用: 利用可能なメンバーをログに出力
+        /// </summary>
+        private void LogAvailableMembers(Type type)
+        {
+            Plugin.Log.Info($"jumpEndPos not found. Available members in {type.Name}:");
+            foreach (var member in type.GetMembers(
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
+            {
+                if (member.Name.ToLower().Contains("jump") || member.Name.ToLower().Contains("pos") || member.Name.ToLower().Contains("end"))
+                {
+                    Plugin.Log.Info($"  - {member.MemberType}: {member.Name}");
+                }
+            }
         }
 
         private void OnBeatTriggered(int colorIndex, float hitTime)
@@ -436,6 +479,269 @@ namespace FaraRhythmMarker.Controllers
             {
                 Plugin.Log.Warn($"Failed to get platform bounds: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// ビートマップデータからBPM変更イベントを抽出する
+        /// </summary>
+        /// <param name="baseBpm">基本BPM</param>
+        /// <returns>BPM変更イベントのリスト</returns>
+        private List<BpmChangeEvent> ExtractBpmChanges(float baseBpm)
+        {
+            var bpmChanges = new List<BpmChangeEvent>();
+
+            try
+            {
+                // まず注入されたbeatmapDataを試す
+                IReadonlyBeatmapData? beatmapData = _beatmapData;
+
+#if BS_1_29_1
+                // 1.29.1では IDifficultyBeatmap から取得
+                if (beatmapData == null && _difficultyBeatmap != null)
+                {
+                    try
+                    {
+                        // beatmapDataプロパティにアクセス
+                        var beatmapDataProp = _difficultyBeatmap.GetType().GetProperty("beatmapData");
+                        if (beatmapDataProp != null)
+                        {
+                            beatmapData = beatmapDataProp.GetValue(_difficultyBeatmap) as IReadonlyBeatmapData;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Plugin.Log.Warn($"Failed to get beatmapData from IDifficultyBeatmap: {ex.Message}");
+                    }
+                }
+#endif
+
+                if (beatmapData == null)
+                {
+                    Plugin.Log.Info("BeatmapData not available, using base BPM only");
+                    return bpmChanges;
+                }
+
+                Plugin.Log.Info($"BeatmapData found: {beatmapData.GetType().FullName}");
+
+                // BPM変更イベントを探す（リフレクションを使用して互換性を確保）
+                ExtractBpmChangesFromBeatmapData(beatmapData, baseBpm, bpmChanges);
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Warn($"Failed to extract BPM changes: {ex.Message}");
+            }
+
+            return bpmChanges;
+        }
+
+        /// <summary>
+        /// ビートマップデータからBPM変更イベントを抽出（リフレクション使用）
+        /// </summary>
+        private void ExtractBpmChangesFromBeatmapData(IReadonlyBeatmapData beatmapData, float baseBpm, List<BpmChangeEvent> bpmChanges)
+        {
+            var rawBpmChanges = new List<(float time, float bpm)>();
+
+            try
+            {
+                // 複数の方法でBPM変更を取得
+                TryExtractFromAllBeatmapDataItems(beatmapData, baseBpm, rawBpmChanges);
+
+                if (rawBpmChanges.Count == 0)
+                    TryExtractFromGetBeatmapDataItems(beatmapData, baseBpm, rawBpmChanges);
+
+                if (rawBpmChanges.Count == 0)
+                    TryExtractFromBeatmapEventsData(beatmapData, baseBpm, rawBpmChanges);
+
+                ProcessBpmChanges(rawBpmChanges, baseBpm, bpmChanges);
+                Plugin.Log.Info($"Extracted {bpmChanges.Count} BPM change events");
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Warn($"Error extracting BPM changes from beatmap data: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// allBeatmapDataItemsからBPM変更を抽出
+        /// </summary>
+        private void TryExtractFromAllBeatmapDataItems(IReadonlyBeatmapData beatmapData, float baseBpm, List<(float time, float bpm)> rawBpmChanges)
+        {
+            var allItemsProp = beatmapData.GetType().GetProperty("allBeatmapDataItems");
+            if (allItemsProp == null) return;
+
+            var allItems = allItemsProp.GetValue(beatmapData) as System.Collections.IEnumerable;
+            if (allItems == null) return;
+
+            foreach (var item in allItems)
+            {
+                if (item == null) continue;
+
+                var itemType = item.GetType();
+                if (itemType.Name.Contains("BPMChange") || itemType.Name.Contains("BpmChange"))
+                {
+                    float time = GetFloatProperty(item, "time") ?? GetFloatProperty(item, "_time") ?? 0f;
+                    float newBpm = GetFloatProperty(item, "bpm") ?? GetFloatProperty(item, "_bpm") ?? baseBpm;
+
+                    rawBpmChanges.Add((time, newBpm));
+                    Plugin.Log.Info($"Found BPM change: time={time}, bpm={newBpm}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// GetBeatmapDataItems<T>からBPM変更を抽出
+        /// </summary>
+        private void TryExtractFromGetBeatmapDataItems(IReadonlyBeatmapData beatmapData, float baseBpm, List<(float time, float bpm)> rawBpmChanges)
+        {
+            var bpmChangeType = FindType("BPMChangeBeatmapEventData");
+            if (bpmChangeType == null) return;
+
+            var getItemsMethod = beatmapData.GetType().GetMethod("GetBeatmapDataItems");
+            if (getItemsMethod == null) return;
+
+            var genericMethod = getItemsMethod.MakeGenericMethod(bpmChangeType);
+            var items = genericMethod.Invoke(beatmapData, null) as System.Collections.IEnumerable;
+            if (items == null) return;
+
+            foreach (var item in items)
+            {
+                if (item == null) continue;
+
+                float time = GetFloatProperty(item, "time") ?? 0f;
+                float newBpm = GetFloatProperty(item, "bpm") ?? baseBpm;
+
+                rawBpmChanges.Add((time, newBpm));
+                Plugin.Log.Info($"Found BPM change via GetBeatmapDataItems: time={time}, bpm={newBpm}");
+            }
+        }
+
+        /// <summary>
+        /// beatmapEventsDataからBPM変更を抽出（古いバージョン用）
+        /// </summary>
+        private void TryExtractFromBeatmapEventsData(IReadonlyBeatmapData beatmapData, float baseBpm, List<(float time, float bpm)> rawBpmChanges)
+        {
+            var eventsDataProp = beatmapData.GetType().GetProperty("beatmapEventsData");
+            if (eventsDataProp == null) return;
+
+            var eventsData = eventsDataProp.GetValue(beatmapData) as System.Collections.IEnumerable;
+            if (eventsData == null) return;
+
+            foreach (var eventItem in eventsData)
+            {
+                if (eventItem == null) continue;
+
+                var eventType = eventItem.GetType();
+                if (eventType.Name.Contains("BPM"))
+                {
+                    float time = GetFloatProperty(eventItem, "time") ?? 0f;
+                    float newBpm = GetFloatProperty(eventItem, "bpm") ?? GetFloatProperty(eventItem, "value") ?? baseBpm;
+
+                    rawBpmChanges.Add((time, newBpm));
+                    Plugin.Log.Info($"Found BPM change via beatmapEventsData: time={time}, bpm={newBpm}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// BPM変更イベントの時間単位を判定して処理する
+        /// Beat Saberの BPMChangeBeatmapEventData.time は秒単位で格納されている
+        /// </summary>
+        private void ProcessBpmChanges(List<(float time, float bpm)> rawBpmChanges, float baseBpm, List<BpmChangeEvent> bpmChanges)
+        {
+            if (rawBpmChanges.Count == 0)
+                return;
+
+            // 時間順にソート
+            rawBpmChanges.Sort((a, b) => a.time.CompareTo(b.time));
+
+            foreach (var (time, newBpm) in rawBpmChanges)
+            {
+                // Beat Saberの BPMChangeBeatmapEventData.time は既に秒単位
+                // そのまま使用する
+                float timeInSeconds = time;
+
+                // 負の時間は曲開始前なのでスキップするか、0として扱う
+                if (timeInSeconds < 0)
+                {
+                    Plugin.Log.Info($"BPM change at {timeInSeconds:F3}s (before song start): {newBpm} BPM - treating as 0s");
+                    timeInSeconds = 0f;
+                }
+
+                bpmChanges.Add(new BpmChangeEvent(timeInSeconds, newBpm));
+                Plugin.Log.Info($"BPM change at {timeInSeconds:F3}s: {newBpm} BPM");
+            }
+
+            // 重複する時間のイベントを統合（最後のものを使用）
+            for (int i = bpmChanges.Count - 2; i >= 0; i--)
+            {
+                if (Math.Abs(bpmChanges[i].Time - bpmChanges[i + 1].Time) < 0.001f)
+                {
+                    bpmChanges.RemoveAt(i);
+                }
+            }
+        }
+
+        /// <summary>
+        /// オブジェクトからfloatプロパティを取得
+        /// </summary>
+        private float? GetFloatProperty(object obj, string propertyName)
+        {
+            try
+            {
+                var type = obj.GetType();
+
+                // プロパティを試す
+                var prop = type.GetProperty(propertyName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (prop != null)
+                {
+                    var value = prop.GetValue(obj);
+                    if (value is float f) return f;
+                    if (value is double d) return (float)d;
+                    if (value is int i) return i;
+                }
+
+                // フィールドを試す
+                var field = type.GetField(propertyName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (field != null)
+                {
+                    var value = field.GetValue(obj);
+                    if (value is float f) return f;
+                    if (value is double d) return (float)d;
+                    if (value is int i) return i;
+                }
+            }
+            catch { }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 型名から型を検索
+        /// </summary>
+        private Type? FindType(string typeName)
+        {
+            try
+            {
+                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    try
+                    {
+                        var type = assembly.GetType(typeName);
+                        if (type != null) return type;
+
+                        // フルネームでなければ、アセンブリ内を検索
+                        foreach (var t in assembly.GetTypes())
+                        {
+                            if (t.Name == typeName)
+                                return t;
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+
+            return null;
         }
     }
 }

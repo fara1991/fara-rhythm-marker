@@ -21,6 +21,7 @@ namespace FaraRhythmMarker.Views
             public Renderer RightRenderer = null!;
             public float HitTime;
             public Color Color;
+            public float Bpm;  // このマーカーのヒット時点でのBPM
 
             public void Destroy()
             {
@@ -32,13 +33,16 @@ namespace FaraRhythmMarker.Views
                 if (Line != null && Line.material != null)
                     UnityEngine.Object.Destroy(Line.material);
 
-                UnityEngine.Object.Destroy(LeftSphere);
-                UnityEngine.Object.Destroy(RightSphere);
-                UnityEngine.Object.Destroy(Line.gameObject);
+                if (LeftSphere != null)
+                    UnityEngine.Object.Destroy(LeftSphere);
+                if (RightSphere != null)
+                    UnityEngine.Object.Destroy(RightSphere);
+                if (Line != null && Line.gameObject != null)
+                    UnityEngine.Object.Destroy(Line.gameObject);
             }
         }
 
-        private List<MarkerInstance> _activeMarkers = new List<MarkerInstance>();
+        private readonly List<MarkerInstance> _activeMarkers = new List<MarkerInstance>();
         private AudioTimeSyncController? _audioTimeSyncController;
         private PlayerTransforms? _playerTransforms;
 
@@ -65,10 +69,12 @@ namespace FaraRhythmMarker.Views
         private float _flashTimer = 0f;
         private float _flashDuration = 0.1f;
         private Color _flashColor = Color.white;
-        private float _flashStartScale = 1.0f;
-        private float _flashEndScale = 2.0f;
+        private const float FlashStartScale = 1.0f;
+        private const float FlashEndScale = 2.0f;
 
         private float _njs = 10f;
+        private float _baseBpm = 120f;
+        private Func<float, float>? _getBpmAtTime;
 
         private Shader? _markerShader;
 
@@ -81,19 +87,21 @@ namespace FaraRhythmMarker.Views
         /// </summary>
         public float PlatformXOffset { get; set; } = 1.5f;
 
-        public void Initialize(AudioTimeSyncController audioTimeSyncController, PlayerTransforms playerTransforms, float njs)
+        public void Initialize(AudioTimeSyncController audioTimeSyncController, PlayerTransforms playerTransforms, float njs, float baseBpm = 120f, Func<float, float>? getBpmAtTime = null)
         {
             try
             {
                 _audioTimeSyncController = audioTimeSyncController;
                 _playerTransforms = playerTransforms;
                 _njs = njs;
+                _baseBpm = baseBpm;
+                _getBpmAtTime = getBpmAtTime;
 
                 _markerShader = FindSafeShader("Particles/Additive");
                 if (_markerShader == null) _markerShader = FindSafeShader("Unlit/Transparent");
 
                 IsInitialized = true;
-                
+
                 if (PluginConfig.Instance.Enabled)
                 {
                     CreateSideLights();
@@ -101,7 +109,7 @@ namespace FaraRhythmMarker.Views
                     CreateFlashMarker();
                 }
 
-                Plugin.Log.Info($"MarkerView initialized for moving markers. NJS: {_njs}");
+                Plugin.Log.Info($"MarkerView initialized for moving markers. NJS: {_njs}, BaseBPM: {_baseBpm}");
             }
             catch (Exception ex)
             {
@@ -269,8 +277,8 @@ namespace FaraRhythmMarker.Views
             // イージング（徐々に速くなる）
             float easedProgress = progress * progress;
 
-            // スケール: 1.0 → 1.5 (拡大)
-            float scale = Mathf.Lerp(_flashStartScale, _flashEndScale, easedProgress);
+            // スケール: 1.0 → 2.0 (拡大)
+            float scale = Mathf.Lerp(FlashStartScale, FlashEndScale, easedProgress);
 
             // アルファ: 1.0 → 0.0 (フェードアウト)
             float alpha = 1.0f - easedProgress;
@@ -367,8 +375,8 @@ namespace FaraRhythmMarker.Views
             line.startWidth = 0.02f;
             line.endWidth = 0.02f;
 
-            // ライト効果を追加 (中央付近に配置するか、複数学べるか)
-            // 要件では「同じようなライトを使い」とのことなので、Lineに加えて点光源も置くか
+            // ライト効果を追加 (中央付近に配置するか、複数並べるか)
+            // Lineに加えて点光源も配置
             var lightObj = new GameObject(name + "_Light");
             lightObj.transform.SetParent(obj.transform);
             lightObj.transform.localPosition = new Vector3(basePosition.x, basePosition.y, 0);
@@ -405,10 +413,18 @@ namespace FaraRhythmMarker.Views
         {
             if (!IsInitialized) return;
 
+            // このマーカーのヒット時点でのBPMを取得
+            float markerBpm = _baseBpm;
+            if (_getBpmAtTime != null)
+            {
+                markerBpm = _getBpmAtTime(hitTime);
+            }
+
             var marker = new MarkerInstance
             {
                 HitTime = hitTime,
-                Color = GetColorForIndex(colorIndex)
+                Color = GetColorForIndex(colorIndex),
+                Bpm = markerBpm
             };
 
             // マーカーの作成
@@ -424,7 +440,7 @@ namespace FaraRhythmMarker.Views
             SetupLineRenderer(marker.Line);
 
             _activeMarkers.Add(marker);
-            
+
             if (_audioTimeSyncController != null)
                 UpdateMarkerPosition(marker, _audioTimeSyncController.songTime);
         }
@@ -542,19 +558,20 @@ namespace FaraRhythmMarker.Views
         {
             // 残り時間（0以下にならないようにクランプ）
             float timeLeft = Mathf.Max(0f, marker.HitTime - songTime);
-            
-            // Z位置の計算: ヒート位置(台座の前) + 残り時間 * NJS
+
+            // Z位置の計算: ヒート位置(台座の前) + 残り時間 * 調整済みNJS
             // マーカーが奥(正のZ)から手前(台座の前)に向かって移動するようにする
-            // Note: songTime が実時間であれば timeScale は不要だが、
-            // songTime が曲内時間の場合、NJS は曲内時間あたりの速度である必要がある。
-            float currentNjs = _njs;
+
+            // ベースNJSをBPM比率で調整
+            // BPMが高いほどマーカーが速く移動する
+            float bpmRatio = marker.Bpm / _baseBpm;
+            float currentNjs = _njs * bpmRatio;
+
             if (_audioTimeSyncController != null)
             {
                 // 音ゲーの再生速度 (1.0, 1.2, 1.5, 0.85 など) を考慮
                 // NJS (Note Jump Speed) は実秒あたりの移動速度 (m/s)
                 // timeLeft は「曲内秒数」であるため、実秒に変換するために timeScale で割る必要がある
-                // 実秒 = 曲内秒 / timeScale
-                // zPos = (実秒 * NJS) + Offset
                 currentNjs /= _audioTimeSyncController.timeScale;
             }
             float zPos = (timeLeft * currentNjs) + HitZOffset;
