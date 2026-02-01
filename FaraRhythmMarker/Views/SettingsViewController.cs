@@ -27,6 +27,8 @@ namespace FaraRhythmMarker.Views
         private float _markerOpacity;
         private float _markerSize;
         private float _flashDuration;
+        private float _markerZOffset;
+        private float _markerZOffsetStep;
 
         public SettingsMenuManager()
         {
@@ -122,6 +124,36 @@ namespace FaraRhythmMarker.Views
             1, 2, 4
         };
 
+        [UIValue("marker-z-offset")]
+        public float MarkerZOffset
+        {
+            get => _markerZOffset;
+            set
+            {
+                _markerZOffset = value;
+                PluginConfig.Instance.MarkerZOffset = value;
+                PluginConfig.Instance.Changed();
+            }
+        }
+
+        [UIValue("marker-z-offset-step")]
+        public float MarkerZOffsetStep
+        {
+            get => _markerZOffsetStep;
+            set
+            {
+                _markerZOffsetStep = value;
+                PluginConfig.Instance.MarkerZOffsetStep = value;
+                PluginConfig.Instance.Changed();
+            }
+        }
+
+        [UIValue("z-offset-step-options")]
+        public System.Collections.Generic.List<object> ZOffsetStepOptions => new()
+        {
+            0.01f, 0.05f, 0.1f
+        };
+
         [UIValue("color1")]
         public Color Color1
         {
@@ -207,6 +239,13 @@ namespace FaraRhythmMarker.Views
             };
         }
 
+        [UIAction("z-offset-step-formatter")]
+        public string ZOffsetStepFormatter(object value)
+        {
+            float step = Convert.ToSingle(value);
+            return $"{step:F2}";
+        }
+
         public void Initialize()
         {
             LoadCurrentSettings();
@@ -225,6 +264,8 @@ namespace FaraRhythmMarker.Views
             _markerOpacity = PluginConfig.Instance.MarkerOpacity;
             _markerSize = PluginConfig.Instance.MarkerSize;
             _flashDuration = PluginConfig.Instance.FlashDuration;
+            _markerZOffset = PluginConfig.Instance.MarkerZOffset;
+            _markerZOffsetStep = PluginConfig.Instance.MarkerZOffsetStep;
         }
 
         private void RegisterSettingsMenu()
@@ -396,6 +437,46 @@ namespace FaraRhythmMarker.Views
             1, 2, 4
         };
 
+        [UIValue("marker-z-offset")]
+        public float MarkerZOffset
+        {
+            get => _manager?.MarkerZOffset ?? 1.0f;
+            set
+            {
+                if (_manager != null) _manager.MarkerZOffset = value;
+            }
+        }
+
+        [UIValue("marker-z-offset-step")]
+        public float MarkerZOffsetStep
+        {
+            get => _manager?.MarkerZOffsetStep ?? 0.1f;
+            set
+            {
+                if (_manager != null) _manager.MarkerZOffsetStep = value;
+            }
+        }
+
+        [UIValue("marker-z-offset-step-setting")]
+        public float MarkerZOffsetStepSetting
+        {
+            get => _manager?.MarkerZOffsetStep ?? 0.1f;
+            set
+            {
+                if (_manager != null)
+                {
+                    _manager.MarkerZOffsetStep = value;
+                    NotifyPropertyChanged(nameof(MarkerZOffsetStep));
+                }
+            }
+        }
+
+        [UIValue("z-offset-step-options")]
+        public System.Collections.Generic.List<object> ZOffsetStepOptions => new()
+        {
+            0.01f, 0.05f, 0.1f
+        };
+
         [UIValue("color1")]
         public Color Color1
         {
@@ -461,6 +542,13 @@ namespace FaraRhythmMarker.Views
                 4 => "Four Colors",
                 _ => $"{mode} Colors"
             };
+        }
+
+        [UIAction("z-offset-step-formatter")]
+        public string ZOffsetStepFormatter(object value)
+        {
+            float step = Convert.ToSingle(value);
+            return $"{step:F2}";
         }
     }
 

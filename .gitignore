@@ -101,3 +101,5 @@ InitTestScene*.unity*
 .claude/
 FaraRhythmMarker/bin/*
 FaraRhythmMarker/obj/*
+
+SKILL.md

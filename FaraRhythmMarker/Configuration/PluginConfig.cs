@@ -76,6 +76,17 @@ namespace FaraRhythmMarker.Configuration
         public virtual float FlashDuration { get; set; } = 0.05f;
 
         /// <summary>
+        /// マーカーのZ座標オフセット（0-2、デフォルト1）
+        /// プレイヤーの音声遅延に合わせて調整可能
+        /// </summary>
+        public virtual float MarkerZOffset { get; set; } = 1.0f;
+
+        /// <summary>
+        /// Z座標オフセットの変更ステップ（0.1, 0.05, 0.01）
+        /// </summary>
+        public virtual float MarkerZOffsetStep { get; set; } = 0.1f;
+
+        /// <summary>
         /// Called when config changes
         /// </summary>
         public virtual void Changed()
