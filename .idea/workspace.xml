@@ -6,7 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="a80a908c-308a-43f7-a54c-d15ee6a53956" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FaraRhythmMarker/Configuration/PluginConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/FaraRhythmMarker/Configuration/PluginConfig.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/FaraRhythmMarker/Controllers/RhythmMarkerController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/FaraRhythmMarker/Controllers/RhythmMarkerController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FaraRhythmMarker/Models/BeatTimingModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/FaraRhythmMarker/Models/BeatTimingModel.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FaraRhythmMarker/Views/MarkerView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/FaraRhythmMarker/Views/MarkerView.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -14,7 +17,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="38" />
+    <option name="cachedIndexableFilesCount" value="72" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Settings">
@@ -33,10 +36,10 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Configuration/PluginConfig.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Configuration/PluginConfig.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Controllers/RhythmMarkerController.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Installers/RhythmMarkerGameInstaller.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Installers/RhythmMarkerMenuInstaller.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Installers/RhythmMarkerMenuInstaller.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Models/BeatTimingModel.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Plugin.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/FaraRhythmMarker/Views/MarkerView.cs" root0="FORCE_HIGHLIGHTING" />
@@ -47,6 +50,9 @@
     <urls />
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 1
 }</component>
@@ -115,6 +121,10 @@
       <workItem from="1769216452012" duration="11249000" />
       <workItem from="1769377520366" duration="214000" />
       <workItem from="1769932070406" duration="3208000" />
+      <workItem from="1769942164974" duration="20513000" />
+      <workItem from="1770007290290" duration="1426000" />
+      <workItem from="1770012971564" duration="364000" />
+      <workItem from="1770015685919" duration="5676000" />
     </task>
     <task id="LOCAL-00001" summary="Update FaraRhythmMarker">
       <option name="closed" value="true" />

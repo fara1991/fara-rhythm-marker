@@ -79,12 +79,12 @@ namespace FaraRhythmMarker.Controllers
 
             float njs = InitializeNjsAndHitPosition();
 
-            // 設定からのZ座標オフセットを適用
+            // Apply Z offset from config
             float configZOffset = PluginConfig.Instance.MarkerZOffset;
             _view.HitZOffset += configZOffset;
             Plugin.Log.Info($"Applied config MarkerZOffset: {configZOffset}. Final HitZOffset: {_view.HitZOffset}");
 
-            // Initialize Model
+            // Initialize model
 #if BS_1_29_1
             float bpm = _difficultyBeatmap.level.beatsPerMinute;
             float songDuration = _difficultyBeatmap.level.songDuration;
@@ -105,7 +105,7 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// NJSとヒット位置を初期化する
+        /// Initializes NJS and hit position
         /// </summary>
         private float InitializeNjsAndHitPosition()
         {
@@ -148,7 +148,7 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// BeatmapObjectSpawnControllerからjumpEndPosを取得する
+        /// Gets jumpEndPos from BeatmapObjectSpawnController
         /// </summary>
         private bool TryGetJumpEndPos()
         {
@@ -189,14 +189,14 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// SpawnControllerからMovementDataを取得する
+        /// Gets MovementData from SpawnController
         /// </summary>
         private object? GetMovementData(BeatmapObjectSpawnController spawnController)
         {
             var spawnControllerType = spawnController.GetType();
             string[] fieldNames = { "_beatmapObjectSpawnMovementData", "_spawnMovementData", "beatmapObjectSpawnMovementData" };
 
-            // フィールドから取得を試みる
+            // Try to get from field
             foreach (var fieldName in fieldNames)
             {
                 var field = spawnControllerType.GetField(fieldName,
@@ -206,13 +206,13 @@ namespace FaraRhythmMarker.Controllers
                     var value = field.GetValue(spawnController);
                     if (value != null)
                     {
-                        Plugin.Log.Info($"Found movement data via field: {fieldName}");
+                        Plugin.Log.Debug($"Found movement data via field: {fieldName}");
                         return value;
                     }
                 }
             }
 
-            // プロパティから取得を試みる
+            // Try to get from property
             var props = spawnControllerType.GetProperties(
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
             foreach (var prop in props)
@@ -224,7 +224,7 @@ namespace FaraRhythmMarker.Controllers
                         var value = prop.GetValue(spawnController);
                         if (value != null)
                         {
-                            Plugin.Log.Info($"Found movement data via property: {prop.Name}");
+                            Plugin.Log.Debug($"Found movement data via property: {prop.Name}");
                             return value;
                         }
                     }
@@ -240,38 +240,38 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// MovementDataからjumpEndPosを取得する
+        /// Gets jumpEndPos from MovementData
         /// </summary>
         private object? GetJumpEndPosFromMovementData(object movementData)
         {
             var movementDataType = movementData.GetType();
-            Plugin.Log.Info($"Movement data type: {movementDataType.FullName}");
+            Plugin.Log.Debug($"Movement data type: {movementDataType.FullName}");
 
             string[] propertyNames = { "jumpEndPos", "_jumpEndPos" };
             var bindingFlags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
 
             foreach (var name in propertyNames)
             {
-                // プロパティを試す
+                // Try property
                 var prop = movementDataType.GetProperty(name, bindingFlags);
                 if (prop != null)
                 {
                     var value = prop.GetValue(movementData);
                     if (value != null)
                     {
-                        Plugin.Log.Info($"Found {name} as property");
+                        Plugin.Log.Debug($"Found {name} as property");
                         return value;
                     }
                 }
 
-                // フィールドを試す
+                // Try field
                 var field = movementDataType.GetField(name, bindingFlags);
                 if (field != null)
                 {
                     var value = field.GetValue(movementData);
                     if (value != null)
                     {
-                        Plugin.Log.Info($"Found {name} as field");
+                        Plugin.Log.Debug($"Found {name} as field");
                         return value;
                     }
                 }
@@ -281,7 +281,7 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// フォールバックのヒット位置を適用する
+        /// Applies fallback hit position
         /// </summary>
         private void ApplyFallbackHitPosition()
         {
@@ -299,7 +299,7 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// デバッグ用: 利用可能なフィールドをログに出力
+        /// Debug: Logs available fields
         /// </summary>
         private void LogAvailableFields(Type type)
         {
@@ -312,7 +312,7 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// デバッグ用: 利用可能なメンバーをログに出力
+        /// Debug: Logs available members
         /// </summary>
         private void LogAvailableMembers(Type type)
         {
@@ -337,26 +337,26 @@ namespace FaraRhythmMarker.Controllers
             if (!PluginConfig.Instance.Enabled || !_view.IsInitialized)
                 return;
 
-            // Update Model with current song time
+            // Update model with current song time
             float songTime = _audioTimeSyncController.songTime;
 
-            // 曲の開始を検知する
+            // Detect song start
             if (!_songStarted && songTime > 0)
             {
                 _songStarted = true;
-                // 曲開始を 0 ビート目とするため、現在の songTime をオフセットとして設定
+                // Set current songTime as offset so song start is beat 0
                 _songStartTime = songTime;
                 _model.SetStartTimeOffset(_songStartTime);
                 Plugin.Log.Info($"Song start detected at songTime: {_songStartTime}. This is now beat 0.");
             }
 
-            // 曲開始後のみビートの計算を行う
+            // Only calculate beats after song start
             if (_songStarted)
             {
                 _model.Update(songTime);
             }
 
-            // マーカーの移動およびサイドライトの更新 (サイドライトは曲開始前でも更新する)
+            // Update markers and side lights
             _view.UpdateMarkers();
         }
 
@@ -368,7 +368,7 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// 足場からX幅のみ取得する（jumpEndPosが取得できた場合用）
+        /// Gets only X width from platform (when jumpEndPos was obtained)
         /// </summary>
         private void TryGetPlatformXOffset()
         {
@@ -394,7 +394,7 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// 足場のGameObjectを探す
+        /// Finds the platform GameObject
         /// </summary>
         private GameObject? FindPlatformGameObject()
         {
@@ -416,7 +416,7 @@ namespace FaraRhythmMarker.Controllers
                 }
             }
 
-            // 名前で見つからない場合、検索で探す
+            // If not found by name, search all objects
             var allObjects = UnityEngine.Object.FindObjectsOfType<GameObject>();
             foreach (var obj in allObjects)
             {
@@ -433,7 +433,7 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// 足場（PlayersPlace）のGameObjectを探して、その境界からマーカー位置を設定する
+        /// Finds platform GameObject and sets marker position from its bounds
         /// </summary>
         private void TryGetPlatformBounds()
         {
@@ -445,17 +445,17 @@ namespace FaraRhythmMarker.Controllers
                 {
                     Plugin.Log.Info($"Found platform GameObject: {platformObj.name}");
 
-                    // Rendererから境界を取得
+                    // Get bounds from Renderer
                     var renderer = platformObj.GetComponent<Renderer>() ?? platformObj.GetComponentInChildren<Renderer>();
                     if (renderer != null)
                     {
                         var bounds = renderer.bounds;
 
-                        // 足場の奥側の縁のZ座標（max.z）を取得
+                        // Get Z coordinate of platform front edge (max.z)
                         float platformFrontZ = bounds.max.z;
                         _view.HitZOffset = platformFrontZ;
 
-                        // 足場の左右の幅（X方向の半分）を取得
+                        // Get platform half-width (X direction)
                         float platformHalfWidth = bounds.extents.x;
                         _view.PlatformXOffset = platformHalfWidth;
 
@@ -465,7 +465,7 @@ namespace FaraRhythmMarker.Controllers
                     }
                     else
                     {
-                        // Rendererがない場合、Transformの位置を使用
+                        // If no Renderer, use Transform position
                         Plugin.Log.Warn($"Platform '{platformObj.name}' has no Renderer, using transform position");
                         _view.HitZOffset = platformObj.transform.position.z;
                     }
@@ -482,26 +482,26 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// ビートマップデータからBPM変更イベントを抽出する
+        /// Extracts BPM change events from beatmap data
         /// </summary>
-        /// <param name="baseBpm">基本BPM</param>
-        /// <returns>BPM変更イベントのリスト</returns>
+        /// <param name="baseBpm">Base BPM</param>
+        /// <returns>List of BPM change events</returns>
         private List<BpmChangeEvent> ExtractBpmChanges(float baseBpm)
         {
             var bpmChanges = new List<BpmChangeEvent>();
 
             try
             {
-                // まず注入されたbeatmapDataを試す
+                // First try the injected beatmapData
                 IReadonlyBeatmapData? beatmapData = _beatmapData;
 
 #if BS_1_29_1
-                // 1.29.1では IDifficultyBeatmap から取得
+                // In 1.29.1, get from IDifficultyBeatmap
                 if (beatmapData == null && _difficultyBeatmap != null)
                 {
                     try
                     {
-                        // beatmapDataプロパティにアクセス
+                        // Access beatmapData property
                         var beatmapDataProp = _difficultyBeatmap.GetType().GetProperty("beatmapData");
                         if (beatmapDataProp != null)
                         {
@@ -523,7 +523,7 @@ namespace FaraRhythmMarker.Controllers
 
                 Plugin.Log.Info($"BeatmapData found: {beatmapData.GetType().FullName}");
 
-                // BPM変更イベントを探す（リフレクションを使用して互換性を確保）
+                // Find BPM change events (using reflection for compatibility)
                 ExtractBpmChangesFromBeatmapData(beatmapData, baseBpm, bpmChanges);
             }
             catch (Exception ex)
@@ -535,7 +535,7 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// ビートマップデータからBPM変更イベントを抽出（リフレクション使用）
+        /// Extracts BPM change events from beatmap data (using reflection)
         /// </summary>
         private void ExtractBpmChangesFromBeatmapData(IReadonlyBeatmapData beatmapData, float baseBpm, List<BpmChangeEvent> bpmChanges)
         {
@@ -543,7 +543,7 @@ namespace FaraRhythmMarker.Controllers
 
             try
             {
-                // 複数の方法でBPM変更を取得
+                // Try multiple methods to get BPM changes
                 TryExtractFromAllBeatmapDataItems(beatmapData, baseBpm, rawBpmChanges);
 
                 if (rawBpmChanges.Count == 0)
@@ -562,7 +562,7 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// allBeatmapDataItemsからBPM変更を抽出
+        /// Extracts BPM changes from allBeatmapDataItems
         /// </summary>
         private void TryExtractFromAllBeatmapDataItems(IReadonlyBeatmapData beatmapData, float baseBpm, List<(float time, float bpm)> rawBpmChanges)
         {
@@ -583,13 +583,13 @@ namespace FaraRhythmMarker.Controllers
                     float newBpm = GetFloatProperty(item, "bpm") ?? GetFloatProperty(item, "_bpm") ?? baseBpm;
 
                     rawBpmChanges.Add((time, newBpm));
-                    Plugin.Log.Info($"Found BPM change: time={time}, bpm={newBpm}");
+                    Plugin.Log.Debug($"Found BPM change: time={time}, bpm={newBpm}");
                 }
             }
         }
 
         /// <summary>
-        /// GetBeatmapDataItems<T>からBPM変更を抽出
+        /// Extracts BPM changes from GetBeatmapDataItems&lt;T&gt;
         /// </summary>
         private void TryExtractFromGetBeatmapDataItems(IReadonlyBeatmapData beatmapData, float baseBpm, List<(float time, float bpm)> rawBpmChanges)
         {
@@ -611,12 +611,12 @@ namespace FaraRhythmMarker.Controllers
                 float newBpm = GetFloatProperty(item, "bpm") ?? baseBpm;
 
                 rawBpmChanges.Add((time, newBpm));
-                Plugin.Log.Info($"Found BPM change via GetBeatmapDataItems: time={time}, bpm={newBpm}");
+                Plugin.Log.Debug($"Found BPM change via GetBeatmapDataItems: time={time}, bpm={newBpm}");
             }
         }
 
         /// <summary>
-        /// beatmapEventsDataからBPM変更を抽出（古いバージョン用）
+        /// Extracts BPM changes from beatmapEventsData (for older versions)
         /// </summary>
         private void TryExtractFromBeatmapEventsData(IReadonlyBeatmapData beatmapData, float baseBpm, List<(float time, float bpm)> rawBpmChanges)
         {
@@ -637,30 +637,29 @@ namespace FaraRhythmMarker.Controllers
                     float newBpm = GetFloatProperty(eventItem, "bpm") ?? GetFloatProperty(eventItem, "value") ?? baseBpm;
 
                     rawBpmChanges.Add((time, newBpm));
-                    Plugin.Log.Info($"Found BPM change via beatmapEventsData: time={time}, bpm={newBpm}");
+                    Plugin.Log.Debug($"Found BPM change via beatmapEventsData: time={time}, bpm={newBpm}");
                 }
             }
         }
 
         /// <summary>
-        /// BPM変更イベントの時間単位を判定して処理する
-        /// Beat Saberの BPMChangeBeatmapEventData.time は秒単位で格納されている
+        /// Processes BPM change events with time unit determination.
+        /// Beat Saber's BPMChangeBeatmapEventData.time is stored in seconds.
         /// </summary>
         private void ProcessBpmChanges(List<(float time, float bpm)> rawBpmChanges, float baseBpm, List<BpmChangeEvent> bpmChanges)
         {
             if (rawBpmChanges.Count == 0)
                 return;
 
-            // 時間順にソート
+            // Sort by time
             rawBpmChanges.Sort((a, b) => a.time.CompareTo(b.time));
 
             foreach (var (time, newBpm) in rawBpmChanges)
             {
-                // Beat Saberの BPMChangeBeatmapEventData.time は既に秒単位
-                // そのまま使用する
+                // Beat Saber's time is already in seconds, use as is
                 float timeInSeconds = time;
 
-                // 負の時間は曲開始前なのでスキップするか、0として扱う
+                // Negative time is before song start, treat as 0
                 if (timeInSeconds < 0)
                 {
                     Plugin.Log.Info($"BPM change at {timeInSeconds:F3}s (before song start): {newBpm} BPM - treating as 0s");
@@ -668,10 +667,10 @@ namespace FaraRhythmMarker.Controllers
                 }
 
                 bpmChanges.Add(new BpmChangeEvent(timeInSeconds, newBpm));
-                Plugin.Log.Info($"BPM change at {timeInSeconds:F3}s: {newBpm} BPM");
+                Plugin.Log.Debug($"BPM change at {timeInSeconds:F3}s: {newBpm} BPM");
             }
 
-            // 重複する時間のイベントを統合（最後のものを使用）
+            // Merge duplicate time events (keep last one)
             for (int i = bpmChanges.Count - 2; i >= 0; i--)
             {
                 if (Math.Abs(bpmChanges[i].Time - bpmChanges[i + 1].Time) < 0.001f)
@@ -682,7 +681,7 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// オブジェクトからfloatプロパティを取得
+        /// Gets float property from an object
         /// </summary>
         private float? GetFloatProperty(object obj, string propertyName)
         {
@@ -690,7 +689,7 @@ namespace FaraRhythmMarker.Controllers
             {
                 var type = obj.GetType();
 
-                // プロパティを試す
+                // Try property
                 var prop = type.GetProperty(propertyName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (prop != null)
                 {
@@ -700,7 +699,7 @@ namespace FaraRhythmMarker.Controllers
                     if (value is int i) return i;
                 }
 
-                // フィールドを試す
+                // Try field
                 var field = type.GetField(propertyName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (field != null)
                 {
@@ -716,7 +715,7 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// 型名から型を検索
+        /// Finds type by type name
         /// </summary>
         private Type? FindType(string typeName)
         {
@@ -729,7 +728,7 @@ namespace FaraRhythmMarker.Controllers
                         var type = assembly.GetType(typeName);
                         if (type != null) return type;
 
-                        // フルネームでなければ、アセンブリ内を検索
+                        // If not full name, search within assembly
                         foreach (var t in assembly.GetTypes())
                         {
                             if (t.Name == typeName)
