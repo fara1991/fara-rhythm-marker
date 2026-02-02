@@ -59,4 +59,23 @@
                   increment="0.01"
                   apply-on-change="true"
                   hover-hint="How long the marker flash lasts (seconds)"/>
+
+  <horizontal>
+    <text text="Position Settings" font-size="4"/>
+  </horizontal>
+
+  <slider-setting text="Marker Z Offset"
+                  value="marker-z-offset"
+                  min="0"
+                  max="2"
+                  increment="~marker-z-offset-step"
+                  apply-on-change="true"
+                  hover-hint="Z position offset for markers (adjust for audio latency)"/>
+
+  <dropdown-list-setting text="Z Offset Step"
+                         value="marker-z-offset-step-setting"
+                         options="z-offset-step-options"
+                         formatter="z-offset-step-formatter"
+                         apply-on-change="true"
+                         hover-hint="Step size when adjusting Z offset"/>
 </settings-container>
