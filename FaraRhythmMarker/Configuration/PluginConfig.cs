@@ -6,7 +6,7 @@ using IPA.Config.Stores.Attributes;
 
 namespace FaraRhythmMarker.Configuration
 {
-    internal class PluginConfig
+    public class PluginConfig
     {
         public static PluginConfig Instance { get; set; } = null!;
 

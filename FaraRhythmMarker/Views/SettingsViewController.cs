@@ -12,7 +12,7 @@ namespace FaraRhythmMarker.Views
     /// <summary>
     /// Handles the settings menu UI and data binding
     /// </summary>
-    internal class SettingsMenuManager : IInitializable, IDisposable
+    public class SettingsMenuManager : IInitializable, IDisposable
     {
         private MenuButton? _menuButton;
         private SettingsModalView? _modalView;
@@ -316,14 +316,25 @@ namespace FaraRhythmMarker.Views
         {
             if (_menuButton != null)
             {
+                try
+                {
 #if BS_1_29_1
-                BeatSaberMarkupLanguage.MenuButtons.MenuButtons.instance.UnregisterButton(_menuButton);
+                    var menuButtons = BeatSaberMarkupLanguage.MenuButtons.MenuButtons.instance;
 #else
-                BeatSaberMarkupLanguage.MenuButtons.MenuButtons.Instance.UnregisterButton(_menuButton);
+                    var menuButtons = BeatSaberMarkupLanguage.MenuButtons.MenuButtons.Instance;
 #endif
+                    if (menuButtons != null)
+                    {
+                        menuButtons.UnregisterButton(_menuButton);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Log.Debug($"MenuButton cleanup skipped (app quitting): {ex.Message}");
+                }
             }
 
-            if (_modalView != null)
+            if (_modalView != null && _modalView.gameObject != null)
             {
                 UnityEngine.Object.Destroy(_modalView.gameObject);
             }

@@ -154,7 +154,6 @@ namespace FaraRhythmMarker.Views
             _guideLeftSphere = CreateGuideSphere("FaraGuideMarker_L", leftPos, guideColor);
             _guideRightSphere = CreateGuideSphere("FaraGuideMarker_R", rightPos, guideColor);
 
-            UnityEngine.Object.DontDestroyOnLoad(_guideMarkerObj);
         }
 
         private GameObject CreateGuideSphere(string name, Vector3 position, Color color)
@@ -186,7 +185,6 @@ namespace FaraRhythmMarker.Views
             light.color = color;
             light.intensity = 2f;
 
-            UnityEngine.Object.DontDestroyOnLoad(sphere);
             return sphere;
         }
 
@@ -218,7 +216,6 @@ namespace FaraRhythmMarker.Views
             _flashLeftLight = leftLight;
             _flashRightLight = rightLight;
 
-            UnityEngine.Object.DontDestroyOnLoad(_flashMarkerObj);
         }
 
         private GameObject CreateFlashSphere(string name, Vector3 position, out Renderer outRenderer, out Light outLight)
@@ -249,7 +246,6 @@ namespace FaraRhythmMarker.Views
             outLight.range = 2f;
             outLight.intensity = 0f; // 初期状態はオフ
 
-            UnityEngine.Object.DontDestroyOnLoad(sphere);
             return sphere;
         }
 
@@ -386,7 +382,6 @@ namespace FaraRhythmMarker.Views
             light.color = color;
             light.intensity = 2f;
 
-            UnityEngine.Object.DontDestroyOnLoad(obj);
             return obj;
         }
 
@@ -487,7 +482,6 @@ namespace FaraRhythmMarker.Views
             light.type = LightType.Point;
             light.range = 2f;
 
-            UnityEngine.Object.DontDestroyOnLoad(sphere);
             return sphere;
         }
 

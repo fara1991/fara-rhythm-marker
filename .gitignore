@@ -99,6 +99,7 @@ InitTestScene*.unity*
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 
 .claude/
+.idea/**/workspace.xml
 FaraRhythmMarker/bin/*
 FaraRhythmMarker/obj/*
 FaraRhythmMarker/Refs/*
