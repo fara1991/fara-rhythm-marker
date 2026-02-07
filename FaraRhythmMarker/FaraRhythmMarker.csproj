@@ -13,8 +13,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <BeatSaberDir_1_29_1>C:\Users\Fara\BSManager\BSInstances\1.29.1</BeatSaberDir_1_29_1>
-    <BeatSaberDir_1_40_8>C:\Users\Fara\BSManager\BSInstances\1.40.8</BeatSaberDir_1_40_8>
+    <BeatSaberDir_1_29_1>$(USERPROFILE)\BSManager\BSInstances\1.29.1</BeatSaberDir_1_29_1>
+    <BeatSaberDir_1_40_8>$(USERPROFILE)\BSManager\BSInstances\1.40.8</BeatSaberDir_1_40_8>
     <BSVersion Condition="'$(BSVersion)' == ''">1.29.1</BSVersion>
     <CIBuild Condition="'$(CIBuild)' == ''">false</CIBuild>
     <!-- Local build: use Beat Saber installation -->
