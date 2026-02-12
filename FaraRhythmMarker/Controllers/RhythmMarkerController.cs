@@ -105,7 +105,7 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// Initializes NJS and hit position
+        /// Initializes NJS and hit position based on play space origin (Z=0)
         /// </summary>
         private float InitializeNjsAndHitPosition()
         {
@@ -126,205 +126,20 @@ namespace FaraRhythmMarker.Controllers
                     Plugin.Log.Info($"SpawnInitData: noteJumpValue={_spawnInitData.noteJumpValue}, noteJumpValueType={_spawnInitData.noteJumpValueType}, NJS={_spawnInitData.noteJumpMovementSpeed}");
                 }
 
-                bool foundJumpEndPos = TryGetJumpEndPos();
+                // Use play space origin (Z=0) as the marker hit position
+                // The platform is always centered at the origin
+                _view.HitZOffset = 0f;
+                Plugin.Log.Info($"Using play space origin. HitZOffset: {_view.HitZOffset}");
 
-                if (!foundJumpEndPos)
-                {
-                    ApplyFallbackHitPosition();
-                    TryGetPlatformBounds();
-                }
-                else
-                {
-                    TryGetPlatformXOffset();
-                }
+                TryGetPlatformXOffset();
             }
             catch (Exception ex)
             {
-                Plugin.Log.Warn($"Failed to get NJS or spawn data: {ex.Message}. Using default 12.");
+                Plugin.Log.Warn($"Failed to get NJS or player position: {ex.Message}. Using defaults.");
                 _view.HitZOffset = 0f;
             }
 
             return njs;
-        }
-
-        /// <summary>
-        /// Gets jumpEndPos from BeatmapObjectSpawnController
-        /// </summary>
-        private bool TryGetJumpEndPos()
-        {
-            var spawnController = _spawnController ?? GameObject.FindObjectOfType<BeatmapObjectSpawnController>();
-            if (spawnController == null)
-            {
-                Plugin.Log.Warn("BeatmapObjectSpawnController not found");
-                return false;
-            }
-
-            Plugin.Log.Info($"Found BeatmapObjectSpawnController: {spawnController.name}");
-
-            try
-            {
-                var movementData = GetMovementData(spawnController);
-                if (movementData == null)
-                {
-                    LogAvailableFields(spawnController.GetType());
-                    return false;
-                }
-
-                var jumpEndPosValue = GetJumpEndPosFromMovementData(movementData);
-                if (jumpEndPosValue is Vector3 jumpEndPos)
-                {
-                    _view.HitZOffset = jumpEndPos.z;
-                    Plugin.Log.Info($"Got jumpEndPos: {jumpEndPos}. Set HitZOffset to: {_view.HitZOffset}");
-                    return true;
-                }
-
-                LogAvailableMembers(movementData.GetType());
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Plugin.Log.Warn($"Failed to get jumpEndPos via reflection: {ex.Message}");
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Gets MovementData from SpawnController
-        /// </summary>
-        private object? GetMovementData(BeatmapObjectSpawnController spawnController)
-        {
-            var spawnControllerType = spawnController.GetType();
-            string[] fieldNames = { "_beatmapObjectSpawnMovementData", "_spawnMovementData", "beatmapObjectSpawnMovementData" };
-
-            // Try to get from field
-            foreach (var fieldName in fieldNames)
-            {
-                var field = spawnControllerType.GetField(fieldName,
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                if (field != null)
-                {
-                    var value = field.GetValue(spawnController);
-                    if (value != null)
-                    {
-                        Plugin.Log.Debug($"Found movement data via field: {fieldName}");
-                        return value;
-                    }
-                }
-            }
-
-            // Try to get from property
-            var props = spawnControllerType.GetProperties(
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-            foreach (var prop in props)
-            {
-                if (prop.Name.ToLower().Contains("movementdata") || prop.Name.ToLower().Contains("spawn"))
-                {
-                    try
-                    {
-                        var value = prop.GetValue(spawnController);
-                        if (value != null)
-                        {
-                            Plugin.Log.Debug($"Found movement data via property: {prop.Name}");
-                            return value;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Plugin.Log.Debug($"Failed to get property {prop.Name}: {ex.Message}");
-                    }
-                }
-            }
-
-            Plugin.Log.Warn("Movement data not found in BeatmapObjectSpawnController");
-            return null;
-        }
-
-        /// <summary>
-        /// Gets jumpEndPos from MovementData
-        /// </summary>
-        private object? GetJumpEndPosFromMovementData(object movementData)
-        {
-            var movementDataType = movementData.GetType();
-            Plugin.Log.Debug($"Movement data type: {movementDataType.FullName}");
-
-            string[] propertyNames = { "jumpEndPos", "_jumpEndPos" };
-            var bindingFlags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
-
-            foreach (var name in propertyNames)
-            {
-                // Try property
-                var prop = movementDataType.GetProperty(name, bindingFlags);
-                if (prop != null)
-                {
-                    var value = prop.GetValue(movementData);
-                    if (value != null)
-                    {
-                        Plugin.Log.Debug($"Found {name} as property");
-                        return value;
-                    }
-                }
-
-                // Try field
-                var field = movementDataType.GetField(name, bindingFlags);
-                if (field != null)
-                {
-                    var value = field.GetValue(movementData);
-                    if (value != null)
-                    {
-                        Plugin.Log.Debug($"Found {name} as field");
-                        return value;
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Applies fallback hit position
-        /// </summary>
-        private void ApplyFallbackHitPosition()
-        {
-            var spawnCenter = GameObject.FindObjectOfType<BeatmapObjectSpawnCenter>();
-            if (spawnCenter != null)
-            {
-                _view.HitZOffset = spawnCenter.transform.position.z;
-                Plugin.Log.Info($"Fallback: Found BeatmapObjectSpawnCenter at Z: {spawnCenter.transform.position.z}");
-            }
-            else
-            {
-                _view.HitZOffset = 0f;
-                Plugin.Log.Info($"Fallback: Using default HitZOffset: 0");
-            }
-        }
-
-        /// <summary>
-        /// Debug: Logs available fields
-        /// </summary>
-        private void LogAvailableFields(Type type)
-        {
-            Plugin.Log.Info($"Available fields in {type.Name}:");
-            foreach (var field in type.GetFields(
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
-            {
-                Plugin.Log.Info($"  - Field: {field.Name} ({field.FieldType.Name})");
-            }
-        }
-
-        /// <summary>
-        /// Debug: Logs available members
-        /// </summary>
-        private void LogAvailableMembers(Type type)
-        {
-            Plugin.Log.Info($"jumpEndPos not found. Available members in {type.Name}:");
-            foreach (var member in type.GetMembers(
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
-            {
-                if (member.Name.ToLower().Contains("jump") || member.Name.ToLower().Contains("pos") || member.Name.ToLower().Contains("end"))
-                {
-                    Plugin.Log.Info($"  - {member.MemberType}: {member.Name}");
-                }
-            }
         }
 
         private void OnBeatTriggered(int colorIndex, float hitTime)
@@ -368,7 +183,7 @@ namespace FaraRhythmMarker.Controllers
         }
 
         /// <summary>
-        /// Gets only X width from platform (when jumpEndPos was obtained)
+        /// Gets X width from platform for marker placement
         /// </summary>
         private void TryGetPlatformXOffset()
         {
@@ -430,55 +245,6 @@ namespace FaraRhythmMarker.Controllers
             }
 
             return null;
-        }
-
-        /// <summary>
-        /// Finds platform GameObject and sets marker position from its bounds
-        /// </summary>
-        private void TryGetPlatformBounds()
-        {
-            try
-            {
-                var platformObj = FindPlatformGameObject();
-
-                if (platformObj != null)
-                {
-                    Plugin.Log.Info($"Found platform GameObject: {platformObj.name}");
-
-                    // Get bounds from Renderer
-                    var renderer = platformObj.GetComponent<Renderer>() ?? platformObj.GetComponentInChildren<Renderer>();
-                    if (renderer != null)
-                    {
-                        var bounds = renderer.bounds;
-
-                        // Get Z coordinate of platform front edge (max.z)
-                        float platformFrontZ = bounds.max.z;
-                        _view.HitZOffset = platformFrontZ;
-
-                        // Get platform half-width (X direction)
-                        float platformHalfWidth = bounds.extents.x;
-                        _view.PlatformXOffset = platformHalfWidth;
-
-                        Plugin.Log.Info($"Platform bounds - Center: {bounds.center}, Size: {bounds.size}");
-                        Plugin.Log.Info($"Set HitZOffset to platform front edge: {platformFrontZ}");
-                        Plugin.Log.Info($"Set PlatformXOffset to platform half-width: {platformHalfWidth}");
-                    }
-                    else
-                    {
-                        // If no Renderer, use Transform position
-                        Plugin.Log.Warn($"Platform '{platformObj.name}' has no Renderer, using transform position");
-                        _view.HitZOffset = platformObj.transform.position.z;
-                    }
-                }
-                else
-                {
-                    Plugin.Log.Info("Platform GameObject not found, using default values");
-                }
-            }
-            catch (Exception ex)
-            {
-                Plugin.Log.Warn($"Failed to get platform bounds: {ex.Message}");
-            }
         }
 
         /// <summary>
