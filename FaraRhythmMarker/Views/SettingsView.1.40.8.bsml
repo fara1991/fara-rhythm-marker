@@ -1,0 +1,49 @@
+<settings-container>
+  <horizontal>
+    <text text="FaraRhythmMarker Settings" font-size="5" align="Center"/>
+  </horizontal>
+
+  <!-- Common -->
+  <horizontal>
+    <text id="common-header-text" text="Common" font-size="4" color="#B060E0" align="Center"/>
+  </horizontal>
+  <dropdown-list-setting text="Language" value="language" options="language-options"
+                apply-on-change="true" hover-hint="~language-hint"/>
+  <toggle-setting text="~enabled-text" value="enabled" apply-on-change="true"
+                  hover-hint="~enabled-hint"/>
+
+  <!-- Color -->
+  <horizontal>
+    <text id="color-header-text" text="Color" font-size="4" color="#B060E0" align="Center"/>
+  </horizontal>
+  <dropdown-list-setting text="~color-mode-text" value="color-mode" options="color-mode-options"
+                formatter="color-mode-formatter" apply-on-change="true"
+                hover-hint="~color-mode-hint"/>
+  <color-setting text="~color1-text" value="color1" hover-hint="~color1-hint" apply-on-change="true"/>
+  <color-setting text="~color2-text" value="color2" hover-hint="~color2-hint" apply-on-change="true"/>
+  <color-setting text="~color3-text" value="color3" hover-hint="~color3-hint" apply-on-change="true"/>
+  <color-setting text="~color4-text" value="color4" hover-hint="~color4-hint" apply-on-change="true"/>
+
+  <!-- Marker Guide -->
+  <horizontal>
+    <text id="marker-guide-header-text" text="Marker Guide" font-size="4" color="#B060E0" align="Center"/>
+  </horizontal>
+  <dropdown-list-setting text="~beat-division-text" value="beat-division" options="beat-division-options"
+                formatter="beat-division-formatter" apply-on-change="true"
+                hover-hint="~beat-division-hint"/>
+  <horizontal id="beat-division-warning-row" active="~show-beat-division-warning">
+    <text id="beat-division-warning-text" text="" color="yellow" align="Center" font-size="3"/>
+  </horizontal>
+  <slider-setting text="~marker-opacity-text" value="marker-opacity" min="0.1" max="1.0"
+                  increment="0.1" apply-on-change="true" hover-hint="~marker-opacity-hint"/>
+  <slider-setting text="~marker-size-text" value="marker-size" min="20" max="100"
+                  increment="10" apply-on-change="true" hover-hint="~marker-size-hint"/>
+  <slider-setting text="~flash-duration-text" value="flash-duration" min="0.01" max="0.2"
+                  increment="0.01" apply-on-change="true" hover-hint="~flash-duration-hint"/>
+  <slider-setting text="~marker-z-offset-text" value="marker-z-offset" min="0" max="2"
+                  increment="~marker-z-offset-step" apply-on-change="true"
+                  hover-hint="~marker-z-offset-hint"/>
+  <dropdown-list-setting text="~z-offset-step-text" value="marker-z-offset-step-setting"
+                options="z-offset-step-options" formatter="z-offset-step-formatter"
+                apply-on-change="true" hover-hint="~z-offset-step-hint"/>
+</settings-container>

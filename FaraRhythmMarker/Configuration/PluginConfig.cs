@@ -10,6 +10,8 @@ namespace FaraRhythmMarker.Configuration
     {
         public static PluginConfig Instance { get; set; } = null!;
 
+        public virtual string Language { get; set; } = "English";
+
         /// <summary>
         /// Whether the rhythm marker is enabled
         /// </summary>
@@ -44,21 +46,6 @@ namespace FaraRhythmMarker.Configuration
         public virtual float Color4R { get; set; } = 1.0f;
         public virtual float Color4G { get; set; } = 1.0f;
         public virtual float Color4B { get; set; } = 0.0f;
-
-        /// <summary>
-        /// Legacy marker color R (0-1) - kept for compatibility
-        /// </summary>
-        public virtual float MarkerColorR { get; set; } = 1.0f;
-
-        /// <summary>
-        /// Legacy marker color G (0-1) - kept for compatibility
-        /// </summary>
-        public virtual float MarkerColorG { get; set; } = 1.0f;
-
-        /// <summary>
-        /// Legacy marker color B (0-1) - kept for compatibility
-        /// </summary>
-        public virtual float MarkerColorB { get; set; } = 1.0f;
 
         /// <summary>
         /// Marker opacity (0-1)

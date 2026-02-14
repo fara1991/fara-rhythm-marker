@@ -25,15 +25,15 @@
     <LocalRefsDir>$(ProjectDir)Libs</LocalRefsDir>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(BSVersion)' == '1.29.1'">
-    <DefineConstants>$(DefineConstants);BS_1_29_1</DefineConstants>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(BSVersion)' == '1.29.1'">
+        <DefineConstants>$(DefineConstants);BS_1_29_1</DefineConstants>
+    </PropertyGroup>
 
-  <PropertyGroup Condition="'$(BSVersion)' == '1.40.8'">
-    <DefineConstants>$(DefineConstants);BS_1_40_8</DefineConstants>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(BSVersion)' == '1.40.8'">
+        <DefineConstants>$(DefineConstants);BS_1_40_8</DefineConstants>
+    </PropertyGroup>
 
-  <ItemGroup Condition="'$(BSVersion)' == '1.40.8'">
+    <ItemGroup Condition="'$(BSVersion)' == '1.40.8'">
     <Reference Include="DataModels">
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\DataModels.dll</HintPath>
       <Private>false</Private>
@@ -135,7 +135,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Views\SettingsView.bsml" />
+    <EmbeddedResource Include="Views\SettingsView.$(BSVersion).bsml" Condition="Exists('Views\SettingsView.$(BSVersion).bsml')">
+      <LogicalName>$(RootNamespace).Views.SettingsView.bsml</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\SettingsView.1.29.1.bsml" Condition="!Exists('Views\SettingsView.$(BSVersion).bsml')">
+      <LogicalName>$(RootNamespace).Views.SettingsView.bsml</LogicalName>
+    </EmbeddedResource>
     <EmbeddedResource Include="manifest.$(BSVersion).json" Condition="Exists('manifest.$(BSVersion).json')">
       <LogicalName>$(RootNamespace).manifest.json</LogicalName>
     </EmbeddedResource>
@@ -145,7 +150,7 @@
   </ItemGroup>
 
   <!-- Copy to Plugins folder after build (skip in CI) -->
-  <Target Name="CopyToPlugins" AfterTargets="Build" Condition="'$(BuildingMultipleVersions)' != 'true' AND '$(CIBuild)' != 'true'">
+  <Target Name="CopyToPlugins" AfterTargets="Build" Condition="'$(CIBuild)' != 'true'">
     <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(BeatSaberDir)\Plugins" />
   </Target>
 
