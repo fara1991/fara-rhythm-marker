@@ -40,7 +40,7 @@
                   increment="10" apply-on-change="true" hover-hint="~marker-size-hint"/>
   <slider-setting text="~flash-duration-text" value="flash-duration" min="0.01" max="0.2"
                   increment="0.01" apply-on-change="true" hover-hint="~flash-duration-hint"/>
-  <slider-setting text="~marker-z-offset-text" value="marker-z-offset" min="0" max="2"
+  <slider-setting id="marker-z-offset-slider" text="~marker-z-offset-text" value="marker-z-offset" min="0" max="2"
                   increment="~marker-z-offset-step" apply-on-change="true"
                   hover-hint="~marker-z-offset-hint"/>
   <dropdown-list-setting text="~z-offset-step-text" value="marker-z-offset-step-setting"

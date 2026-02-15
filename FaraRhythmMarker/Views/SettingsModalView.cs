@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.ViewControllers;
+using HMUI;
 using TMPro;
 using UnityEngine;
 
@@ -39,6 +40,9 @@ namespace FaraRhythmMarker.Views
 
         [UIComponent("beat-division-warning-text")]
         private TextMeshProUGUI? _beatDivisionWarningText;
+
+        [UIObject("marker-z-offset-slider")]
+        private GameObject? _markerZOffsetSliderObj;
 #pragma warning restore CS0649
 
         [UIValue("language-hint")]
@@ -77,7 +81,7 @@ namespace FaraRhythmMarker.Views
         [UIValue("beat-division-text")]
         public string BeatDivisionText { get => L("Beat Division", "ビート分割"); set { } }
         [UIValue("beat-division-hint")]
-        public string BeatDivisionHint { get => L("Markers per beat", "1ビートあたりのマーカー数"); set { } }
+        public string BeatDivisionHint { get => L("Marker display interval", "マーカーの表示間隔"); set { } }
 
         [UIValue("marker-opacity-text")]
         public string MarkerOpacityText { get => L("Marker Opacity", "マーカー透明度"); set { } }
@@ -323,8 +327,18 @@ namespace FaraRhythmMarker.Views
                 {
                     _manager.MarkerZOffsetStep = value;
                     NotifyPropertyChanged(nameof(MarkerZOffsetStep));
+                    UpdateZOffsetSliderSteps(value);
                 }
             }
+        }
+
+        private void UpdateZOffsetSliderSteps(float increment)
+        {
+            if (_markerZOffsetSliderObj == null || increment <= 0f)
+                return;
+            var slider = _markerZOffsetSliderObj.GetComponentInChildren<RangeValuesTextSlider>();
+            if (slider != null)
+                slider.numberOfSteps = Mathf.RoundToInt((slider.maxValue - slider.minValue) / increment) + 1;
         }
 
         [UIValue("z-offset-step-options")]

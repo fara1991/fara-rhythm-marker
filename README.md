@@ -1,6 +1,6 @@
 # FaraRhythmMarker
 
-Beat Saber 1.29.1 および 1.40.8 に対応した、プレイ中に一定のビート間隔で流れてくるリズムマーカーを表示するプラグインです。
+BeatSaber1.29.1 および 1.40.8 に対応した、プレイ中に一定のビート間隔で流れてくるリズムマーカーを表示するプラグインです。
 ノーツの流れる速度（NJS）と同期してマーカーが移動するため、リズムを視覚的に把握しやすくなります。
 
 ## 主な機能
@@ -40,14 +40,14 @@ Beat Saber 1.29.1 および 1.40.8 に対応した、プレイ中に一定のビ
 
 ## 動作要件
 
-### Beat Saber 1.29.1
+### BeatSaber1.29.1
 | Mod | バージョン |
 |-----|-----------|
 | BSIPA | 4.2.0 以上 |
 | SiraUtil | 3.1.0 以上 |
 | BeatSaberMarkupLanguage (BSML) | 1.6.0 以上 |
 
-### Beat Saber 1.40.8
+### BeatSaber1.40.8
 | Mod | バージョン |
 |-----|-----------|
 | BSIPA | 4.3.0 以上 |
@@ -56,8 +56,8 @@ Beat Saber 1.29.1 および 1.40.8 に対応した、プレイ中に一定のビ
 
 ## インストール方法
 
-1. [リリースページ](../../releases)から対象のBeat Saberバージョンに合った `FaraRhythmMarker-vX.X.X-BSXXX.zip` をダウンロードします。
-2. zipを解凍し、`FaraRhythmMarker.dll` をBeat Saberのインストールフォルダ内の `Plugins` フォルダに配置してください。
+1. [リリースページ](../../releases)から対象のBeatSaberバージョンに合った `FaraRhythmMarker-vX.X.X-BSXXX.zip` をダウンロードします。
+2. zipを解凍し、`FaraRhythmMarker.dll` をBeatSaberのインストールフォルダ内の `Plugins` フォルダに配置してください。
 
 ## ビルド方法
 
@@ -86,7 +86,7 @@ dotnet build -p:BSVersion=1.40.8
 
 1. GitHubの **Actions** タブで **Build and Release** を選択
 2. **Run workflow** をクリック
-3. ブランチ、タグ（例: `v1.0.0`）、Beat Saberバージョンを指定
+3. ブランチ、タグ（例: `v1.0.0`）、BeatSaberバージョンを指定
 4. Releaseページに自動でDLLがアップロードされます
 
 詳細は [.github/CI_SETUP.md](.github/CI_SETUP.md) を参照してください。

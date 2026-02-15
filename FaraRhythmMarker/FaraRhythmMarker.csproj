@@ -149,20 +149,69 @@
     </EmbeddedResource>
   </ItemGroup>
 
-  <!-- Copy to Plugins folder after build (skip in CI) -->
-  <Target Name="CopyToPlugins" AfterTargets="Build" Condition="'$(CIBuild)' != 'true'">
+  <!-- Copy to Plugins folder after build (skip in CI and release) -->
+  <Target Name="CopyToPlugins" AfterTargets="Build" Condition="'$(CIBuild)' != 'true' AND '$(CreateRelease)' != 'true'">
     <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(BeatSaberDir)\Plugins" />
   </Target>
 
-  <!-- Build both versions -->
-  <Target Name="BuildAllVersions" AfterTargets="Build" Condition="'$(BuildingMultipleVersions)' != 'true' AND '$(BSVersion)' == '1.29.1'">
+  <!-- Build both versions (skip during release) -->
+  <Target Name="BuildAllVersions" AfterTargets="Build" Condition="'$(BuildingMultipleVersions)' != 'true' AND '$(CreateRelease)' != 'true' AND '$(BSVersion)' == '1.29.1'">
     <Message Text="Building for Beat Saber 1.29.1..." Importance="high" />
     <MSBuild Projects="$(MSBuildProjectFile)" Targets="Build" Properties="BSVersion=1.29.1;BuildingMultipleVersions=true" />
-    
+
     <Message Text="Building for Beat Saber 1.40.8..." Importance="high" />
     <MSBuild Projects="$(MSBuildProjectFile)" Targets="Build" Properties="BSVersion=1.40.8;BuildingMultipleVersions=true" />
-    
+
     <Message Text="Both versions built successfully!" Importance="high" />
+  </Target>
+
+  <!-- Create release zip (version is read from manifest.json) -->
+  <Target Name="CreateRelease" AfterTargets="Build" Condition="'$(CreateRelease)' == 'true' AND '$(BuildingMultipleVersions)' != 'true'">
+    <!-- Read version from manifest file -->
+    <PropertyGroup>
+      <ManifestPath Condition="Exists('$(ProjectDir)manifest.$(BSVersion).json')">$(ProjectDir)manifest.$(BSVersion).json</ManifestPath>
+      <ManifestPath Condition="!Exists('$(ProjectDir)manifest.$(BSVersion).json')">$(ProjectDir)manifest.json</ManifestPath>
+    </PropertyGroup>
+    <ReadLinesFromFile File="$(ManifestPath)">
+      <Output TaskParameter="Lines" ItemName="ManifestLines" />
+    </ReadLinesFromFile>
+    <PropertyGroup>
+      <ManifestContent>@(ManifestLines)</ManifestContent>
+      <ManifestVersion>$([System.Text.RegularExpressions.Regex]::Match($(ManifestContent), '"version"\s*:\s*"([^"]+)"').Groups[1].Value)</ManifestVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <ReleaseDir>$(ProjectDir)..\release</ReleaseDir>
+      <ReleaseStagingDir>$(ReleaseDir)\staging</ReleaseStagingDir>
+      <ReleaseZipName>FaraRhythmMarker_v$(ManifestVersion).zip</ReleaseZipName>
+    </PropertyGroup>
+
+    <!-- Clean staging directory -->
+    <RemoveDir Directories="$(ReleaseStagingDir)" />
+    <MakeDir Directories="$(ReleaseStagingDir)\1.29.1" />
+    <MakeDir Directories="$(ReleaseStagingDir)\1.40.8" />
+
+    <!-- Build 1.29.1 -->
+    <Message Text="[Release] Building for Beat Saber 1.29.1..." Importance="high" />
+    <MSBuild Projects="$(MSBuildProjectFile)" Targets="Build" Properties="BSVersion=1.29.1;BuildingMultipleVersions=true;CreateRelease=false" />
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(ReleaseStagingDir)\1.29.1" />
+
+    <!-- Build 1.40.8 -->
+    <Message Text="[Release] Building for Beat Saber 1.40.8..." Importance="high" />
+    <MSBuild Projects="$(MSBuildProjectFile)" Targets="Build" Properties="BSVersion=1.40.8;BuildingMultipleVersions=true;CreateRelease=false" />
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(ReleaseStagingDir)\1.40.8" />
+
+    <!-- Copy SETTINGS_GUIDE.md -->
+    <Copy SourceFiles="$(ProjectDir)..\SETTINGS_GUIDE.md" DestinationFolder="$(ReleaseStagingDir)" />
+
+    <!-- Create zip -->
+    <Delete Files="$(ReleaseDir)\$(ReleaseZipName)" Condition="Exists('$(ReleaseDir)\$(ReleaseZipName)')" />
+    <ZipDirectory SourceDirectory="$(ReleaseStagingDir)" DestinationFile="$(ReleaseDir)\$(ReleaseZipName)" />
+
+    <!-- Clean staging directory -->
+    <RemoveDir Directories="$(ReleaseStagingDir)" />
+
+    <Message Text="[Release] Created: release\$(ReleaseZipName)" Importance="high" />
   </Target>
 
 </Project>
