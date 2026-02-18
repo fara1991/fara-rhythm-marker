@@ -3,7 +3,7 @@
   "id": "FaraRhythmMarker",
   "name": "FaraRhythmMarker",
   "author": "Fara",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "gameVersion": "1.29.1",
   "description": "Displays rhythm markers at specified beat intervals during gameplay.",
   "dependsOn": {
