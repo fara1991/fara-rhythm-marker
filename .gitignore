@@ -98,7 +98,10 @@ InitTestScene*.unity*
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 
-.claude/
+# Claude Code（共有するのは CLAUDE.md と .claude/skills/ だけ。個人の設定とメモは入れない）
+.claude/*
+!.claude/skills/
+CLAUDE.local.md
 .idea/**/workspace.xml
 FaraRhythmMarker/bin/*
 FaraRhythmMarker/obj/*
@@ -108,4 +111,5 @@ release/
 # Keep csproj tracked (override Unity template)
 !FaraRhythmMarker/*.csproj
 
-SKILL.md
+# ツールが直下に作るスキルの下書き（共有するスキルは .claude/skills/ に置く）
+/SKILL.md
